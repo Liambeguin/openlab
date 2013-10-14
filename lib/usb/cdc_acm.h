@@ -18,46 +18,27 @@
  */
 
 /*
- * buttons.c
+ * cdc_acm.c
  *
- *  Created on: Dec 28, 2011
+ *  Created on: Aug 30, 2011
  *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *              Antoine Fraboulet <antoine.fraboulet.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
 
-void button_handler(void *dummy)
-{
-    leds_toggle(LED_1);
-}
+#ifndef __USB_CDC_ACM_H
+#define __USB_CDC_ACM_H
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+extern const usb_profile_t usb_cdc_acm;
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
+/**
+ * USB CDC ACM Application Interface 
+ */
 
-    // Register handler
-//  button_set_handler(button_handler, NULL);
+typedef void (*cdc_acm_data_callback_t)(uint8_t *buf, uint16_t len);
 
-    while (1)
-    {
-        int i;
+void cdc_acm_register_rx_callback(cdc_acm_data_callback_t cb_rx);
 
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
+uint16_t cdc_acm_send(uint8_t *buf, uint16_t len);
 
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+#endif

@@ -18,46 +18,20 @@
  */
 
 /*
- * buttons.c
- *
- *  Created on: Dec 28, 2011
  *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *
  */
 
-#include <stdint.h>
-#include "platform.h"
+#ifndef __USB_HID_H
+#define __USB_HID_H
 
-void button_handler(void *dummy)
-{
-    leds_toggle(LED_1);
-}
+extern const usb_profile_t usb_hid;
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+/**
+ * USB HID Application Interface
+ */
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
+void hid_send(int8_t x, int8_t y, bool button1, bool button2, bool button3);
 
-    // Register handler
-//  button_set_handler(button_handler, NULL);
+#endif
 
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}

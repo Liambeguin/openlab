@@ -14,50 +14,30 @@
  * License along with HiKoB Openlab. If not, see
  * <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2012 HiKoB.
+ * Copyright (C) 2011,2012 HiKoB.
  */
 
 /*
- * buttons.c
+ * packet_storage.c
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: Sep 14, 2012
+ *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
+#include "packet.h"
 
-void button_handler(void *dummy)
+enum
 {
-    leds_toggle(LED_1);
-}
+    PACKET_BUFFER_DEFAULT_SIZE = 6,
+};
 
-int main()
+__attribute__((weak)) packet_t packet_storage_packet_buffer[PACKET_BUFFER_DEFAULT_SIZE];
+__attribute__((weak)) uint32_t packet_storage_packet_flags[(PACKET_BUFFER_DEFAULT_SIZE
+        - 1) / 32 + 1];
+
+__attribute__((weak)) packet_storage_t packet_storage =
 {
-    // Initialize the platform
-    platform_init();
-
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+        .packet_buffer = packet_storage_packet_buffer,
+        .packet_flags = packet_storage_packet_flags,
+        .packet_number = PACKET_BUFFER_DEFAULT_SIZE
+};

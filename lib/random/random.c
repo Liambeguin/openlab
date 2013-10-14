@@ -14,50 +14,37 @@
  * License along with HiKoB Openlab. If not, see
  * <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2012 HiKoB.
+ * Copyright (C) 2011,2012 HiKoB.
  */
 
 /*
- * buttons.c
+ * random.c
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: Sept 2011
+ *      Author: Antoine Fraboulet <antoine.fraboulet.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
+/*
+ * This lib uses the standard rand() function call.
+ * Upgrade to a more robust random generator using LFSR of
+ * PRNG is required as soon as possible.
+ */
 
-void button_handler(void *dummy)
+#include "random.h"
+#include <stdlib.h>
+
+void random_init(unsigned int seed)
 {
-    leds_toggle(LED_1);
+    srand(seed);
 }
 
-int main()
+unsigned short random_rand16(void)
 {
-    // Initialize the platform
-    platform_init();
-
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
+    return (unsigned short)rand();
 }
+
+unsigned int   random_rand32(void)
+{
+    return (unsigned int)rand();
+}
+

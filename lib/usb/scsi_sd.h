@@ -18,46 +18,19 @@
  */
 
 /*
- * buttons.c
+ * scsi_sd.h
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: Jun 17, 2012
+ *      Author: Antoine Fraboulet <antoine.fraboulet.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
 
-void button_handler(void *dummy)
-{
-    leds_toggle(LED_1);
-}
+#ifndef __USB_SCSI_SD_H
+#define __USB_SCSI_SD_H
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+void          scsi_sd_init          ( uint8_t lun );
+void          scsi_sd_read_capacity ( uint8_t lun, uint32_t *bcount, uint16_t *bsize );
+scsi_cmdret_t scsi_sd_read10        ( scsi_params_t scsi_params );
+scsi_cmdret_t scsi_sd_write10       ( scsi_params_t scsi_params );
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+#endif

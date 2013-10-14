@@ -11,3 +11,7 @@ add_subdirectory(scanf)
 
 # Add the rtos directory
 add_subdirectory(os)
+
+#Add the periph directory
+add_subdirectory(periph)
+

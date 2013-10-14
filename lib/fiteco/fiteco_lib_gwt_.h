@@ -18,46 +18,27 @@
  */
 
 /*
- * buttons.c
- *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ * \file fiteco_lib_gwt.h
+ * \date Nov 30, 2012
+ * \author Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
+#ifndef FITECO_LIB_GWT__H_
+#define FITECO_LIB_GWT__H_
 
-void button_handler(void *dummy)
+#include "gpio.h"
+#include "adg759.h"
+
+typedef struct
 {
-    leds_toggle(LED_1);
-}
+    gpio_t main_power_gpio; gpio_pin_t main_power_pin;
+    gpio_t battery_power_gpio; gpio_pin_t battery_power_pin;
+    gpio_t battery_charge_gpio; gpio_pin_t battery_charge_pin;
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+    adg759_t current_mux;
+} fiteco_lib_gwt_config_t;
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
+/** Set the configuration structure of the GWT */
+void fiteco_lib_gwt_set_config(const fiteco_lib_gwt_config_t* config);
 
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+#endif /* FITECO_LIB_GWT__H_ */

@@ -18,46 +18,18 @@
  */
 
 /*
- * buttons.c
+ * msc.c
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: May 18, 2012
+ *      Author: Antoine Fraboulet <antoine.fraboulet.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
+#ifndef __USB_MSC_H
+#define __USB_MSC_H
 
-void button_handler(void *dummy)
-{
-    leds_toggle(LED_1);
-}
+extern const usb_profile_t usb_msc;
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+void usb_msc_init();
+void usb_msc_reset();
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+#endif

@@ -14,50 +14,50 @@
  * License along with HiKoB Openlab. If not, see
  * <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2012 HiKoB.
+ * Copyright (C) 2011,2012 HiKoB.
  */
 
-/*
- * buttons.c
- *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+/**
+ * \file prints.c
+ * \date Oct 4, 2012
+ * \author Christophe Braillon <christophe.braillon.at.hikob.com>
  */
 
 #include <stdint.h>
-#include "platform.h"
+#include <stdbool.h>
+#include "printf_.h"
 
-void button_handler(void *dummy)
+void prints(printf_param_t *p, const char *string, uint16_t width, bool pad_zero)
 {
-    leds_toggle(LED_1);
-}
+    const char *ptr;
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
-
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
+    // Substract string length to width
+    if (width > 0)
     {
-        int i;
+        ptr = string;
 
-        for (i = 0; i < 0x80000; i++)
+        while (*ptr)
         {
-            __asm__("nop");
-        }
+            ptr++;
 
-        if (button_state())
-        {
-            leds_toggle(LED_0);
+            if (width > 0)
+            {
+                width--;
+            }
         }
     }
 
-    return 0;
+    // Pad if necessary
+    while (width > 0)
+    {
+        p->out(pad_zero ? '0' : ' ', p);
+        width--;
+    }
+
+    // Write the string
+    while (*string)
+    {
+        p->out(*string, p);
+        string++;
+    }
 }

@@ -14,50 +14,28 @@
  * License along with HiKoB Openlab. If not, see
  * <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2012 HiKoB.
+ * Copyright (C) 2011,2012 HiKoB.
  */
 
 /*
- * buttons.c
+ * eeprom_.h
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: Jan 2, 2013
+ *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#include <stdint.h>
-#include "platform.h"
+#ifndef EEPROM__H_
+#define EEPROM__H_
 
-void button_handler(void *dummy)
+#include "eeprom.h"
+
+/** Structure containing the available eeprom */
+typedef struct
 {
-    leds_toggle(LED_1);
-}
+    const eeprom_t *internal, *external;
+} eeprom_config_t;
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+/** Config structure to be provided by the platform */
+extern const eeprom_config_t eeprom_config;
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
-}
+#endif /* EEPROM__H_ */

@@ -18,46 +18,34 @@
  */
 
 /*
- * buttons.c
+ * usb_core.c
  *
- *  Created on: Dec 28, 2011
- *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
+ *  Created on: Jun 15, 2012
+ *      Author: Antoine Fraboulet <antoine.fraboulet.at.hikob.com>et
  */
 
-#include <stdint.h>
 #include "platform.h"
+#include "usb.h"
+#include "libusb.h"
 
-void button_handler(void *dummy)
+#define NO_DEBUG_HEADER
+#define LOG_LEVEL LOG_LEVEL_WARNING
+#include "printf.h"
+
+#if (LOG_LEVEL < LOG_LEVEL_DEBUG)
+#define DBG(x...)   printf(x)
+#else
+#define DBG(x...)   do { } while(0)
+#endif // LOG_LEVEL
+
+
+
+void usb_init(const usb_profile_t *profile)
 {
-    leds_toggle(LED_1);
-}
+    usb_driver_init( profile );
 
-int main()
-{
-    // Initialize the platform
-    platform_init();
+    usb_msc_init();
+    usb_dfu_init();
 
-    // Set initial values
-    leds_off(LED_0);
-    leds_off(LED_1);
-
-    // Register handler
-//  button_set_handler(button_handler, NULL);
-
-    while (1)
-    {
-        int i;
-
-        for (i = 0; i < 0x80000; i++)
-        {
-            __asm__("nop");
-        }
-
-        if (button_state())
-        {
-            leds_toggle(LED_0);
-        }
-    }
-
-    return 0;
+    platform_usb_enable();
 }
