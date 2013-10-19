@@ -1,31 +1,42 @@
 /*
- * This file is part of HiKoB Openlab.
+ * This file is part of DronolabSTM32-embedded
  *
- * HiKoB Openlab is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation, version 3.
+ * DronolabSTM32-embedded is a student project designed
+ * for flying drones.
  *
- * HiKoB Openlab is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
+ * Go to < dronolab.etsmtl.ca > to find out more about
+ * the project
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with HiKoB Openlab. If not, see
- * <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2011,2012 HiKoB.
  */
+
 
 /*
  * stm32f4eval_periph.c
  *
- *  Created on: Sep 17, 2012
- *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
+ *  Created on: 2013-10-13
+ *      Author: liam
  */
 
 #include "stm32f4eval.h"
+#include "lis302dl/lis302dl_.h"
+
+/** accelerometer setup */
+static void acc_setup();
+
 
 void platform_periph_setup()
 {
+	acc_setup();
+
+}
+
+
+static void acc_setup(){
+
+	//config
+	lis302dl_config(SPI_1, GPIO_E, GPIO_PIN_3);
+
+	//init
+	lis302dl_init();
 }

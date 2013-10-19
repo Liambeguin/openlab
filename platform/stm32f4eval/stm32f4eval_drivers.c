@@ -1,4 +1,5 @@
 /*
+
  * This file is part of HiKoB Openlab.
  *
  * HiKoB Openlab is free software: you can redistribute it and/or
@@ -30,13 +31,21 @@
 #include "nvic_.h"
 
 #include "uart_.h"
+#include "spi_.h"
+#include "gpio_.h"
 #include "timer_.h"
 #include "ethmac_.h"
+
+#define USART2_GPIO_PORT GPIO_A
+#define USART2_GPIO_TX GPIO_PIN_2
+#define USART2_GPIO_RX GPIO_PIN_3
+
 
 static void gpio_drivers_setup();
 static void uart_drivers_setup();
 static void timer_drivers_setup();
 static void ethmac_drivers_setup();
+static void spi_drivers_setup();
 
 void platform_drivers_setup()
 {
@@ -44,7 +53,19 @@ void platform_drivers_setup()
     uart_drivers_setup();
     timer_drivers_setup();
 
+    spi_drivers_setup();
+
     ethmac_drivers_setup();
+}
+
+static void spi_drivers_setup(){
+
+	//Enable SPI1 for communication with lis302dl
+	gpio_set_spi_clk(GPIO_A, GPIO_PIN_5);
+	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
+	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
+	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
+
 }
 
 static void gpio_drivers_setup()
@@ -80,16 +101,21 @@ void usart3_isr()
 static void timer_drivers_setup()
 {
     // Configure the General Purpose Timers
+	timer_enable(TIM_1);
     timer_enable(TIM_2);
     timer_enable(TIM_3);
     timer_enable(TIM_4);
 
     // Select the clocks for all timers
+    timer_select_internal_clock(TIM_1, 0);
     timer_select_internal_clock(TIM_2, 0);
     timer_select_internal_clock(TIM_3, 0);
     timer_select_internal_clock(TIM_4, 0);
 
     // Start others timers as 32kHz clock
+    timer_select_internal_clock(TIM_1,
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
+                        - 1);
     timer_select_internal_clock(TIM_2,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
@@ -101,11 +127,16 @@ static void timer_drivers_setup()
                     - 1);
 
     // Start ALL PWM and other timers
+    timer_start(TIM_1, 0xFFFF, NULL, NULL);
     timer_start(TIM_2, 0xFFFF, NULL, NULL);
     timer_start(TIM_3, 0xFFFF, NULL, NULL);
     timer_start(TIM_4, 0xFFFF, NULL, NULL);
 }
 
+void tim1_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);

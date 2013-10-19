@@ -27,6 +27,7 @@ include_directories(
 add_library(platform STATIC
 	${PROJECT_SOURCE_DIR}/platform/platform
 	stm32f4eval 
+	stm32f4eval_button
 	stm32f4eval_leds
 	stm32f4eval_drivers
 	stm32f4eval_periph
@@ -48,5 +49,9 @@ target_link_libraries(platform
 	printf
 	event
 	softtimer
-	)
 
+# Periph 
+	lis302dl
+	
+	)
+	

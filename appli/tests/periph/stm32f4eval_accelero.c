@@ -18,12 +18,12 @@
  */
 
 #include <stdint.h>
-
-#include "platform.h"
-#include "lis302dl.h"
 #include "printf.h"
 #define NO_DEBUG_HEADER
 #include "debug.h"
+
+#include "platform.h"
+#include "lis302dl.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -36,11 +36,11 @@ int main(void){
 
 	//init platform
 	platform_init();
-	printf("Test of default accelerometer on STM32F4eval "
+	printf("\n\n Test of default accelerometer on STM32F4eval "
 				"\n -------------------\n");
 
 	// Set led to show device is on
-    leds_on(LED_0);
+    leds_on(F4_LED_RED | F4_LED_GREEN);
 
     // Create a task to read whoami
     ret =   xTaskCreate(acc_whoami_task, (const signed char * const) "WHOAMI",
@@ -66,12 +66,9 @@ void acc_whoami_task(void *arg)
     // arg is not used
     (void) arg;
 
-
-
-    while (1)
-    {
+//  Reading whoAmI register at 1 Hz
+    while (1){
     	lis302dl_read_whoami();
-//        printf("WhoAmI value [0x%02x] \n", data);
         vTaskDelay(configTICK_RATE_HZ);
     }
 }

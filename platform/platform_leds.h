@@ -40,6 +40,19 @@ enum
     LED_2 = 0x4,
 };
 
+/**
+ * Enumeration of the different LEDs
+ * available on STM32F4eval
+ *
+ */
+enum
+{
+	F4_LED_GREEN	= 0x1,
+	F4_LED_ORANGE	= 0x2,
+	F4_LED_RED		= 0x4,
+	F4_LED_BLUE		= 0x8
+};
+
 
 #if !defined(PLATFORM_OS) || (PLATFORM_OS != CONTIKI)
 

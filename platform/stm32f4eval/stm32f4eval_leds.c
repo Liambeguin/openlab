@@ -27,9 +27,9 @@
 #include "stm32f4eval.h"
 
 static gpio_t leds_gpio[] =
-{ GPIO_G, GPIO_G, GPIO_I, GPIO_C };
+{ GPIO_D, GPIO_D, GPIO_D, GPIO_D };
 static gpio_pin_t leds_pin[] =
-{ GPIO_PIN_6, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_7 };
+{ GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15 };
 static int leds_num = sizeof(leds_gpio) / sizeof(leds_gpio[0]);
 
 void platform_leds_setup()

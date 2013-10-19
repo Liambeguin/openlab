@@ -59,9 +59,6 @@
 #include "drivers.h"
 #include "platform_leds.h"
 
-/* Phy include */
-#include "phy.h"
-
 /**
  * Reference to the UART driver used as output for printf.
  */
@@ -71,10 +68,6 @@ extern uart_t uart_print;
  */
 extern uart_t uart_external;
 
-/**
- * Reference to the default PHY radio interface, if it exists.
- */
-extern phy_t phy;
 
 /**
  * Initialize the platform.
