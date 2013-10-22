@@ -26,6 +26,7 @@
  */
 
 #include "stm32f4eval.h"
+#include "debug.h"
 
 #include "rcc.h"
 #include "nvic_.h"
@@ -40,6 +41,9 @@
 #define USART2_GPIO_TX GPIO_PIN_2
 #define USART2_GPIO_RX GPIO_PIN_3
 
+/*
+ * 	USART pins : PC10(yellow), PC11(orange)
+ */
 
 static void gpio_drivers_setup();
 static void uart_drivers_setup();
@@ -60,11 +64,12 @@ void platform_drivers_setup()
 
 static void spi_drivers_setup(){
 
-	//Enable SPI1 for communication with lis302dl
-	gpio_set_spi_clk(GPIO_A, GPIO_PIN_5);
-	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
-	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
-	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
+
+	//SPI2 config
+	gpio_set_spi_clk(GPIO_B, GPIO_PIN_13);
+	gpio_set_spi_miso(GPIO_B, GPIO_PIN_14);
+	gpio_set_spi_mosi(GPIO_B, GPIO_PIN_15);
+	spi_enable(SPI_2, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
 
 }
 

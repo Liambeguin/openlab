@@ -18,6 +18,9 @@
  *      Author: liam
  */
 
+
+//todo
+
 #include <stdint.h>
 
 #include "spi.h"
@@ -82,9 +85,7 @@ void lis302dl_init(){
 
 }
 
-
-
-void lis302dl_read_whoami(){
+uint8_t lis302dl_read_whoami(){
 
 	uint8_t data = 0;
 
@@ -101,10 +102,29 @@ void lis302dl_read_whoami(){
 	soft_timer_delay_us(5);
 
 	cs_clear();
-	spi_transfer_single(lis302dl.spi, (LIS302DL_COM_READ | LIS302DL_REGADDR_WHOAMI));
-	data = spi_transfer_single(lis302dl.spi, LIS302DL_COM_DUMMY);
+	data = spi_transfer_single(lis302dl.spi, (LIS302DL_COM_READ | LIS302DL_REGADDR_WHOAMI));
+//	data = spi_transfer_single(lis302dl.spi, LIS302DL_COM_DUMMY);
 	cs_set();
 
 	log_warning("data : 0x%02x", data);
 
+
+	//if we read the good value return 1 else return 0
+	if(data == 0x3B)
+		return 0xff;
+	else
+		return 0x00;
+
+}
+
+void spiRW(uint8_t txbuf, uint8_t rxbuf){
+
+	cs_clear();
+	spi_transfer(lis302dl.spi, &txbuf, &rxbuf, 4);
+	cs_set();
+}
+
+uint8_t spiSingle(uint8_t tx){
+
+	return spi_transfer_single(lis302dl.spi, tx);
 }

@@ -19,24 +19,37 @@
  */
 
 #include "stm32f4eval.h"
-#include "lis302dl/lis302dl_.h"
 
-/** accelerometer setup */
-static void acc_setup();
+#include "spi.h"
+#include "gpio.h"
+
+
+/** SPI_2 setup */
+static void spi_setup();
+#define CS_PORT GPIO_C
+#define CS_PIN 	GPIO_PIN_3
 
 
 void platform_periph_setup()
 {
-	acc_setup();
+	spi_setup();
+}
 
+static void spi_setup(){
+
+	gpio_enable(CS_PORT);
+	gpio_set_output(CS_PORT, CS_PIN);
+	gpio_config_output_type(CS_PORT, CS_PIN, GPIO_TYPE_PUSH_PULL);
+	gpio_config_pull_up_down(CS_PORT, CS_PIN, GPIO_PULL_UP);
+
+	//set Chip Select
+	gpio_pin_set(CS_PORT, CS_PIN);
 }
 
 
-static void acc_setup(){
 
-	//config
-	lis302dl_config(SPI_1, GPIO_E, GPIO_PIN_3);
 
-	//init
-	lis302dl_init();
-}
+
+
+
+

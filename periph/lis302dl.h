@@ -18,12 +18,16 @@
  *      Author: liam
  */
 
+//todo
+
 #ifndef LIS302DL_H_
 #define LIS302DL_H_
 
 #include <stdint.h>
 
-void lis302dl_read_whoami();
-
+//uint8_t lis302dl_read_whoami();
+uint8_t lis302dl_read_whoami();
+void spiRW(uint8_t txbuf, uint8_t rxbuf);
+uint8_t spiSingle(uint8_t tx);
 
 #endif /* LIS302DL_H_ */

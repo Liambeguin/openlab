@@ -35,6 +35,9 @@
 #include "random.h"
 #include "soft_timer.h"
 
+#include "spi.h"
+#define PLATFORM_SPI SPI_2
+
 #include "printf.h"
 #include "debug.h"
 
@@ -109,4 +112,10 @@ void platform_start_freertos_tick(uint16_t frequency, handler_t handler,
 {
     // For now, until the RTC works, start the systick.
     nvic_enable_systick(frequency, handler, arg);
+}
+
+//fixme should be defined elsewhere ??
+uint8_t platform_spi_single(uint8_t tx_buffer){
+
+	return spi_transfer_single(PLATFORM_SPI, tx_buffer);
 }

@@ -11,5 +11,5 @@
 #
 
 
-add_executable(test_stm32f4eval_accelero stm32f4eval_accelero)
-target_link_libraries(test_stm32f4eval_accelero platform )
+add_executable(test_stm32f4eval_spi2 stm32f4eval_spi2)
+target_link_libraries(test_stm32f4eval_spi2 platform )

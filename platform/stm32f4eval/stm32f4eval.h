@@ -39,4 +39,6 @@ void platform_lib_setup();
 void platform_net_setup();
 
 
+uint8_t platform_spi_single(uint8_t tx_buffer);
+
 #endif /* STM32F4EVAL_H_ */
