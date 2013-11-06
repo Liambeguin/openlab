@@ -73,7 +73,7 @@ void spi_dummy_task(void *arg){
 
     while (1){
 
-    	printf("txbuf : %02x \t rxbuf : %02x \n", txbuf, platform_spi_single(txbuf));
+    	printf("txbuf : %02x \t rxbuf : %02x \r", txbuf, platform_spi_single(txbuf));
 
     	vTaskDelay(configTICK_RATE_HZ);
 

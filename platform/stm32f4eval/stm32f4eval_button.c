@@ -37,3 +37,4 @@ uint32_t button_state()
 {
     return gpio_pin_read(BUTTON_GPIO_PORT, BUTTON_GPIO_PIN);
 }
+

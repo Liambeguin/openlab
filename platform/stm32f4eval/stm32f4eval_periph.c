@@ -23,16 +23,21 @@
 #include "spi.h"
 #include "gpio.h"
 
+#include "debug.h"
 
-/** SPI_2 setup */
+/** SPI_2 setup **/
 static void spi_setup();
 #define CS_PORT GPIO_C
 #define CS_PIN 	GPIO_PIN_3
 
+/** PWM setup **/
+#include "motors.h"
+static void motors_setup();
 
 void platform_periph_setup()
 {
-	spi_setup();
+//	spi_setup();
+	motors_setup();
 }
 
 static void spi_setup(){
@@ -46,8 +51,26 @@ static void spi_setup(){
 	gpio_pin_set(CS_PORT, CS_PIN);
 }
 
+static void motors_setup(){
 
 
+	//temp motor type
+	motor_t test =
+	{
+			.timer 		= TIM_4,
+			.channel	= TIMER_CHANNEL_2,
+			.alternate 	= GPIO_AF_2,
+			.port 		= GPIO_D,
+			.pin 		= GPIO_PIN_13
+	};
+
+
+	gpio_enable(test.port);
+	gpio_set_timer_output(test.port, test.pin, (gpio_af_t)test.alternate);
+
+	motors_config(test);
+	motors_init();
+}
 
 
 

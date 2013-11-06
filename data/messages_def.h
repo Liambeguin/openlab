@@ -14,7 +14,7 @@
 
 #include "messages_entry.h"
 
-namespace Messages {
+//namespace Messages {
 
 
 //Telemetry purpose LLC => Telemetry
@@ -25,8 +25,7 @@ namespace Messages {
 	
 	Voir Frederic Morin pour les details : frederic.morin.8@gmail.com
 */
-class RcChannelMessage {
-public:
+static struct RcChannelMessage {
 	static const uint8_t ID = 0x01;	
 	float throttle;
 	float roll;
@@ -37,8 +36,7 @@ public:
 }__attribute__ ((packed ));
 
 //Telemetry purpose LLC ->Telemetry
-class UCommandsMessage {
-	public:
+static struct UCommandsMessage {
 	static const uint8_t ID = 0x02;
 	float u1;
 	float u2;
@@ -52,8 +50,7 @@ class UCommandsMessage {
 //Telemetry + OBC 
 // LLC => Telemetry
 // LLC => OBC
-class IMUDataMessage {
-	public:
+static struct IMUDataMessage {
 	static const uint8_t ID = 0x03;
 	float roll;
 	float pitch;
@@ -68,8 +65,7 @@ class IMUDataMessage {
 
 //Telemetry
 // LLC => Telemetry
-class EstimatedInsPositionMessage {
-	public:
+static struct EstimatedInsPositionMessage {
 	static const uint8_t ID = 0x04;
 	float ins_estimated_x;
 	float ins_estimated_y;
@@ -81,8 +77,7 @@ class EstimatedInsPositionMessage {
 
 //Telemetry 
 // LLC => Telemetry
-class MotorSpeedMessage {
-	public:
+static struct MotorSpeedMessage {
 	static const uint8_t ID = 0x05;
 	float m1;
 	float m2;
@@ -92,8 +87,7 @@ class MotorSpeedMessage {
 
 //Telemetry
 // LLC => Telemetry
-class WatchdogMessage {
-	public:
+static struct WatchdogMessage {
 	static const uint8_t ID = 0x07;
 	uint8_t rc :1;
 	uint8_t pc :1;
@@ -106,7 +100,6 @@ class WatchdogMessage {
 //Telemetry
 // LLC => Telemetry
 class BatteryStatusMessage {
-	public:
 	static const uint8_t ID = 0x08;
 	uint8_t status;
 	float consumed_mah;
@@ -115,10 +108,9 @@ class BatteryStatusMessage {
 }__attribute__ ((packed ));
 
 
-// Echo de confirmation de réception des données
+// Echo de confirmation de rï¿½ception des donnï¿½es
 // LLC => Telemetry
 class EchoPoseMessage {
-	public:
 	static const uint8_t ID = 0x09;
 
 	float current_x;
@@ -148,10 +140,9 @@ class EchoPoseMessage {
 }__attribute__ ((packed ));
 
 
-// Echo de confirmation de réception des données
+// Echo de confirmation de rï¿½ception des donnï¿½es
 // LLC => Telemetry
 class EchoInsCorrectionMessage {
-	public:
 	static const uint8_t ID = 0x10;
 
 	float ins_correction_x;
@@ -168,7 +159,6 @@ class EchoInsCorrectionMessage {
 
 // LLC => Telemetry
 class DebugFloatMessage {
-	public:
 	static const uint8_t ID = 0x20;
 	
 	float debug_0;
@@ -182,7 +172,6 @@ class DebugFloatMessage {
 
 
 class InsCorrectionMessage {
-	public:
 	static const uint8_t ID = 0x40;
 	
 	float ins_correction_x; 
@@ -200,14 +189,12 @@ class InsCorrectionMessage {
 // LLC => Telemetry
 // LLC => OBC
 class DatastoreTimestampMessage {
-	public:
 	static const uint8_t ID = 0x41;
 	uint32_t ms;
 }__attribute__ ((packed ));
 
 // OBC => LLC
 class PoseCommandMessage {
-	public:
 	static const uint8_t ID = 0x64;
 	
 	float current_x;
@@ -228,7 +215,6 @@ class PoseCommandMessage {
 
 
 class FirmwareVersionMessage {
-	public:
 	static const uint8_t ID = 0x42;
 	
 	float version;
@@ -238,7 +224,6 @@ class FirmwareVersionMessage {
 
 // LLC => Telemetry
 class RcTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x80;
 	
 	uint32_t avrg_exec_us;
@@ -249,7 +234,6 @@ class RcTaskMonitoringMessage {
 
 // LLC => Telemetry
 class ImuTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x81;
 	
 	uint32_t avrg_exec_us;
@@ -265,7 +249,6 @@ class ImuTaskMonitoringMessage {
 
 // LLC => Telemetry
 class CtrlPosTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x82;
 	
 	uint32_t avrg_exec_us;
@@ -276,7 +259,6 @@ class CtrlPosTaskMonitoringMessage {
 
 // LLC => Telemetry
 class CtrlAttTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x83;
 	
 	uint32_t avrg_exec_us;
@@ -289,7 +271,6 @@ class CtrlAttTaskMonitoringMessage {
 
 // LLC => Telemetry
 class ObcTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x84;
 	
 	uint32_t avrg_exec_us;
@@ -305,7 +286,6 @@ class ObcTaskMonitoringMessage {
 /*
 // LLC => Telemetry
 class TelemetryTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x85;
 	
 	uint32_t avrg_exec_us;
@@ -318,7 +298,6 @@ class TelemetryTaskMonitoringMessage {
 
 // LLC => Telemetry
 class InsTaskMonitoringMessage {
-	public:
 	static const uint8_t ID = 0x86;
 	
 	uint32_t avrg_exec_us;
@@ -330,7 +309,6 @@ class InsTaskMonitoringMessage {
 
 
 class GainMessage {
-	public:
 	static const uint8_t ID = 0x97;
 	
 	float k1;
@@ -348,7 +326,6 @@ class GainMessage {
 /*
 // Telemetry => LLC
 class SetParameterMessage {
-	public:
 	static const uint8_t ID = 0x90;
 	uint8_t id;
 	float value;
@@ -356,43 +333,37 @@ class SetParameterMessage {
 
 // Telemetry => LCC
 class SaveParameterMessage {
-	public:
 	static const uint8_t ID = 0x91;
 }__attribute__ ((packed ));
 
 //Telemetry => LLC
 class ClearParameterMessage {
-	public:
 	static const uint8_t ID = 0x92;
 }__attribute__ ((packed ));
 
 //Telemetry => LLC
 class ResetParameterMessage {
-	public:
 	static const uint8_t ID = 0x93;	
 }__attribute__ ((packed ));
 
 //Telemetry => LLC
 class SendDefaultParametersMessage {
-	public:
 	static const uint8_t ID = 0x94;
 };
 
 //Telemetry => LLC
 class SendLiveParametersMessage {
-	public:
 	static const uint8_t ID = 0x95;
 };
 
 //Telemetry => LLC
 class SendFlashParametersMessage {
-	public:
 	static const uint8_t ID = 0x96;
 };
 
 //Telemetry => LLC
 */
 
-} // namespace Message
+//} // namespace Message
 
 #endif // MSG_DEF_H

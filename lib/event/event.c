@@ -35,6 +35,7 @@
 #include "event.h"
 #include "event_priorities.h"
 #include "printf.h"
+#define NO_DEBUG_HEADER
 #include "debug.h"
 
 #include "soft_timer.h"

@@ -12,7 +12,7 @@
 
 #include <inttypes.h>
 
-namespace Messages {
+//namespace Messages {
 
 /* message entry info */
 class Entry;
@@ -59,6 +59,6 @@ public:
 	}
 };
 
-} // namespace Message
+//} // namespace Message
 
 #endif // MESSAGE_ENTRY_H

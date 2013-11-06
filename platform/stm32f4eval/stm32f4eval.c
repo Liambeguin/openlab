@@ -34,10 +34,9 @@
 #include "unique_id.h"
 #include "random.h"
 #include "soft_timer.h"
-
 #include "spi.h"
 #define PLATFORM_SPI SPI_2
-
+#include "timer.h"
 #include "printf.h"
 #include "debug.h"
 

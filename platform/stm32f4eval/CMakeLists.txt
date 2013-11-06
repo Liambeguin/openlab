@@ -52,6 +52,7 @@ target_link_libraries(platform
 
 # Periph 
 	lis302dl
+	motors
 	
 	)
 	
