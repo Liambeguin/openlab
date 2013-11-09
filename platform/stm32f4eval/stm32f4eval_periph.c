@@ -54,22 +54,49 @@ static void spi_setup(){
 static void motors_setup(){
 
 
-	//temp motor type
-	motor_t test =
-	{
-			.timer 		= TIM_4,
-			.channel	= TIMER_CHANNEL_2,
-			.alternate 	= GPIO_AF_2,
-			.port 		= GPIO_D,
-			.pin 		= GPIO_PIN_13
+	//array containing the configuration of the different motors
+	motor_t motors[] = {
+			{
+					.timer 		= TIM_4,
+					.channel	= TIMER_CHANNEL_1,
+					.alternate 	= GPIO_AF_2,
+					.port 		= GPIO_B,
+					.pin 		= GPIO_PIN_6
+			},
+			{
+					.timer 		= TIM_4,
+					.channel	= TIMER_CHANNEL_2,
+					.alternate 	= GPIO_AF_2,
+					.port 		= GPIO_B,
+					.pin 		= GPIO_PIN_7
+			},
+			{
+					.timer 		= TIM_4,
+					.channel	= TIMER_CHANNEL_3,
+					.alternate 	= GPIO_AF_2,
+					.port 		= GPIO_B,
+					.pin 		= GPIO_PIN_8
+			},
+			{
+					.timer 		= TIM_4,
+					.channel	= TIMER_CHANNEL_4,
+					.alternate 	= GPIO_AF_2,
+					.port 		= GPIO_B,
+					.pin 		= GPIO_PIN_9
+			}
+
 	};
 
 
-	gpio_enable(test.port);
-	gpio_set_timer_output(test.port, test.pin, (gpio_af_t)test.alternate);
 
-	motors_config(test);
-	motors_init();
+	uint8_t i;
+	for(i=0; i<sizeof(motors)/sizeof(motors[0]); i++){
+		gpio_enable(motors[i].port);
+		gpio_set_timer_output(motors[i].port, motors[i].pin, (gpio_af_t)motors[i].alternate);
+	}
+
+	motors_config(motors);
+	motors_idle();
 }
 
 

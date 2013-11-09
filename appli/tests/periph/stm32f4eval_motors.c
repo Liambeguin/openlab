@@ -32,9 +32,9 @@
 #include "task.h"
 
 static void char_rx(handler_arg_t arg, uint8_t c);
-void pwm_dummy_task(void *arg);
+void ppm_dummy_task(void *arg);
 
-uint16_t timer_compare = 0;
+float ratio = 0;
 
 
 int main(void){
@@ -44,13 +44,13 @@ int main(void){
 	//init platform
 	platform_init();
 
-	printf("\n\n Test of dummy PWM on STM32F4eval "
+	printf("\n\n Test of dummy PPM on STM32F4eval "
 				"\n -------------------\n");
 
 	// Set led to show device is on
-//    leds_on(F4_LED_RED);
+    leds_on(0xff);
 
-    ret =   xTaskCreate(pwm_dummy_task, (const signed char * const) "PWM_dummy",
+    ret =   xTaskCreate(ppm_dummy_task, (const signed char * const) "PPM_dummy",
                 configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
     switch (ret)
@@ -62,6 +62,7 @@ int main(void){
 
         default:
             printf("PWM_dummy task created successfully\n");
+            break;
     }
 
     // Start the scheduler
@@ -70,36 +71,32 @@ int main(void){
 
 static void char_rx(handler_arg_t arg, uint8_t c){
 
-
 //	log_error("entered : %c", c);
-	if(c == 'z' && timer_compare < (0xffff))
-		timer_compare ++;
-	if(c == 'x' && timer_compare > 0)
-		timer_compare --;
-	if(c == '5')
-		ppm_update(0.5);
-	if(c == '0')
-		motors_idle();
+	if(c == 'z')
+		ratio += 0.01;
+	if(c == 'x')
+		ratio -= 0.01;
 
+//	checking range of ratio
+	ratio = (ratio <= 0 ? 0 : (ratio >= 1 ? 1 : ratio));
 }
 
-void pwm_dummy_task(void *arg){
+void ppm_dummy_task(void *arg){
 
     // arg is not used
     (void) arg;
-    uint32_t last_time = 0;
 
+    leds_off(0xff);
     leds_on(F4_LED_GREEN);
 
     uart_set_rx_handler(uart_print, char_rx, NULL);
 
-    printf("Handler set ! \n\n");
-
     while (1){
 
-    	printf("timer_compare value : 0x%04x \r", timer_compare);
-    	dummy_timer(timer_compare);
+    	printf("ratio : %f                    \r", ratio);
+//    	ppm_test(ratio);
 
+    	motors_test(ratio);
     	vTaskDelay(configTICK_RATE_HZ/4);
     }
 }

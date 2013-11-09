@@ -28,65 +28,92 @@
 #include "gpio.h"
 #include "timer.h"
 
-static motor_t _motor;
+//Variable globale au fichier correspondant aux moteurs du drone.
+static motor_t _motors[4];
+
+uint16_t _value_0, _value_100, _span;
 
 
-/**
- *
- * todo definir un tableau de structure contenant les differents moteurs
- * faire passer deux param timer_config(timer, freq) et motor_config
- *
- */
-void motors_config(motor_t motor){
+//todo check if config with array worked !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void motors_config(motor_t *motors){
 
 	log_info("[MOTORS] initializing motors ...");
+	uint16_t timer_arr;
 
-	_motor = motor;
+	uint8_t i;
+	for(i=0; i<sizeof(_motors)/sizeof(_motors[0]); i++)
+		_motors[i] = motors[i];
 
 	// Configure the General Purpose Timers
-	timer_enable(motor.timer);
+	timer_enable(motors[0].timer);
 
-	// Start timer
-	timer_start(motor.timer, PPM_PERIOD, NULL, NULL);
+	//setting timer limits only doing it once because it's the same timer for all motors
+	timer_arr 	= (2.5/1000)*timer_get_frequency(motors[0].timer);
+	_value_0 	= (1.0/1000)*timer_get_frequency(motors[0].timer);
+	_value_100 	= (2.0/1000)*timer_get_frequency(motors[0].timer);
+	_span 		= _value_100 - _value_0;
 
-	timer_set_channel_compare(motor.timer, motor.channel, 0, NULL, NULL);
-	timer_activate_channel_output(motor.timer, motor.channel, TIMER_OUTPUT_MODE_PWM1);
+	log_info("[MOTORS] timer_frequency : %d Hz\t end count : 0x%04x", timer_get_frequency(motors[0].timer), timer_arr);
+	log_info("\t 0   %% : 0x%04x \n\t 100 %% : 0x%04x \n\t Span  : %d values", _value_0, _value_100, _value_100-_value_0);
 
+	/**
+	 * Starting timer at the frequency set in <platform>_drivers.c
+	 *
+	 * ******* ALL MOTORS SHOULD BE ON SAME TIMER *******
+	 *
+	 */
+	timer_start(motors[0].timer, timer_arr, NULL, NULL);
+
+	//todo activate other channels
+	for(i=0; i<sizeof(_motors)/sizeof(_motors[0]); i++){
+		timer_set_channel_compare(motors[i].timer, motors[0].channel, 0, NULL, NULL);
+		timer_activate_channel_output(motors[0].timer, motors[0].channel, TIMER_OUTPUT_MODE_PWM1);
+	}
 	log_info("[MOTORS] initialized !!");
 }
 
-void motors_init(){
-	/**
-	 *
-	 * todo make motors beep !! and set to off
-	 *
-	 */
+void ppm_update(motor_t motor, float ratio){
 
-
-
-}
-
-void dummy_timer(uint16_t value){
-
-	timer_update_channel_compare(_motor.timer, _motor.channel, value);
-}
-
-void ppm_update(float ratio){
-
-	uint16_t pulse_value = 0;
-		if (ratio < 0.0f || ratio > 1.0f)
-		{
-			//printf("PPM Value out of range\r\n  ratio = %.2f\r\n  channel = %d\r\n", ratio, channel);
-			printf("PPM Value out of range\r\n");
+		if (ratio < 0.0f || ratio > 1.0f){
+			log_error("PPM Value out of range");
 			return;
 		}
 
-		pulse_value = PPM_PROPORTION * ratio + PPM_MINIMUM;
-
-		log_warning("writing 0x%04x to compare", pulse_value);
-
-		timer_update_channel_compare(_motor.timer, _motor.channel, pulse_value);
+		timer_update_channel_compare(motor.timer, motor.channel, (uint16_t)((float)_span * ratio + (float)_value_0));
 }
+
+//test for a single motor appli
+void ppm_test(float ratio){
+
+	if (ratio < 0.0f || ratio > 1.0f){
+		log_error("PPM Value out of range");
+		return;
+	}
+
+	timer_update_channel_compare(_motors[0].timer, _motors[0].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+}
+
+//test for a 4 motors appli
+void motors_test(float ratio){
+
+	if (ratio < 0.0f || ratio > 1.0f){
+		log_error("PPM Value out of range");
+		return;
+	}
+
+	timer_update_channel_compare(_motors[0].timer, _motors[0].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+	timer_update_channel_compare(_motors[1].timer, _motors[1].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+	timer_update_channel_compare(_motors[2].timer, _motors[2].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+	timer_update_channel_compare(_motors[3].timer, _motors[3].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+}
+
+
+
+
+
+
+
+
 
 /**
  * Fonction obtain with measure from Guigz, feb. 2013
@@ -104,52 +131,47 @@ float motors_rad_to_percent(float v) {
                 return  0.01 * ( 0.00011424106 * (v*v) + 0.02670861842 * v ); // equation return in %
 }
 
-
 void motors_speeds(const float M1, const float M2, const float M3, const float M4) {
 
-//        //Register motor speed in rad/s
+        //Register motor speed in rad/s
 //        Singleton::get()->data.set(DataStore::M1, M1);
 //        Singleton::get()->data.set(DataStore::M2, M2);
 //        Singleton::get()->data.set(DataStore::M3, M3);
 //        Singleton::get()->data.set(DataStore::M4, M4);
-//
-//
-//        //Transform in ppm duty, if speed is to low, idle motor !!!!
-//        const float V1 = ( M1 > 5 ? rad_to_percent(M1) : IDLE_POURC_ESC);
-//        const float V2 = ( M2 > 5 ? rad_to_percent(M2) : IDLE_POURC_ESC);
-//        const float V3 = ( M3 > 5 ? rad_to_percent(M3) : IDLE_POURC_ESC);
-//        const float V4 = ( M4 > 5 ? rad_to_percent(M4) : IDLE_POURC_ESC);
-//
-//        Singleton::get()->ppm0.update(V3); //On BOARD : M1 => O3
-//        Singleton::get()->ppm1.update(V4); //On BOARD : M2 => O4
-//        Singleton::get()->ppm2.update(V1); //On BOARD : M3 => O1
-//        Singleton::get()->ppm3.update(V2); //ON BOARD : M4 => O2
+
+
+        //Transform in ppm duty, if speed is to low, idle motor !!!!
+        const float V1 = ( M1 > 5 ? motors_rad_to_percent(M1) : IDLE_POURC_ESC);
+        const float V2 = ( M2 > 5 ? motors_rad_to_percent(M2) : IDLE_POURC_ESC);
+        const float V3 = ( M3 > 5 ? motors_rad_to_percent(M3) : IDLE_POURC_ESC);
+        const float V4 = ( M4 > 5 ? motors_rad_to_percent(M4) : IDLE_POURC_ESC);
+
+        ppm_update(_motors[0], V1);
+        ppm_update(_motors[1], V2);
+        ppm_update(_motors[2], V3);
+        ppm_update(_motors[3], V4);
 
 }
 
-void motors_idle()
-{
+void motors_idle(){
 
-        ppm_update(IDLE_POURC_ESC);
-//        Singleton::get()->ppm1.update(IDLE_POURC_ESC);
-//        Singleton::get()->ppm2.update(IDLE_POURC_ESC);
-//        Singleton::get()->ppm3.update(IDLE_POURC_ESC);
-
+        ppm_update(_motors[0], IDLE_POURC_ESC);
+        ppm_update(_motors[1], IDLE_POURC_ESC);
+        ppm_update(_motors[2], IDLE_POURC_ESC);
+        ppm_update(_motors[3], IDLE_POURC_ESC);
 }
 
+void motors_kill(){
 
-void motors_kill()
-{
-	log_info("motors killed !!");
-//	set all 4 PWMs to 0
+	log_info("[MOTORS] killing motors...");
 
-//        Singleton::get()->ppm0.update(0.0f); //On BOARD : M1 => O3
-//        Singleton::get()->ppm1.update(0.0f); //On BOARD : M2 => O4
-//        Singleton::get()->ppm2.update(0.0f); //On BOARD : M3 => O1
-//        Singleton::get()->ppm3.update(0.0f); //ON BOARD : M4 => O2
+	ppm_update(_motors[0], 0.0f);
+    ppm_update(_motors[1], 0.0f);
+    ppm_update(_motors[2], 0.0f);
+    ppm_update(_motors[3], 0.0f);
+
+    log_info("[MOTORS] motors killed !!");
 }
-
-
 
 void motors_update(float U1, float U2, float U3, float U4) {
 

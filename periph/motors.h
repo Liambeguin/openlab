@@ -15,6 +15,12 @@
  *
  *  Created on: 2013-10-28
  *      Author: liam <liambeguin.at.gmail.com>
+ *
+ *
+ *  Les moteurs sont controles par PPM.
+ *  Le protocole PPM est base sur une longueur d'impulsion 1ms = 0% , 2ms = 100%.
+ *  La fonction update, utilise un duty_% base sur la plage [1ms et 2ms].
+ *  Typiquement le signal PWM a une frequence de 400hz.
  */
 
 #ifndef MOTORS_H_
@@ -22,36 +28,15 @@
 
 #include "gpio.h"
 
-/*
- * Le protocole PPM est base sur une longueur d'impulsion 1ms = 0% , 2ms = 100%.
- * La fonction update, utilise un duty_% base sur la plage [1ms et 2ms].
- * Typiquement le signal PWM a une frequence de 400hz.
- *
- */
-
-
-//todo
-#define MOTOR_0				0
-#define MOTOR_MAX			0
-
-#define MOTOR_SPAN			(MOTOR_MAX-MOTOR_0)
-#define DUTY_PERCENT_LIM 	0.95f
-
-#define MOTOR_SPEED_MAX 750.0f
-
-//#define PPM_PERIOD 		60000
-#define PPM_PERIOD 		80
-#define PPM_MINIMUM 	0.045 * PPM_PERIOD
-#define PPM_PROPORTION 	1.1 / 20.0 * PPM_PERIOD
-
-#define IDLE_POURC_ESC (0.06f)
+#define DUTY_PERCENT_LIM	(  0.95f)
+#define MOTOR_SPEED_MAX		(750.00f)
+#define IDLE_POURC_ESC		(  0.06f)
 
 
 typedef struct {
 
 	timer_t timer;
 	timer_channel_t channel;
-
 	uint8_t alternate;
 
 	gpio_t port;
@@ -59,14 +44,12 @@ typedef struct {
 
 }motor_t;
 
+void motors_config(motor_t *motor);
 
-void motors_config(motor_t motor);
-void motors_init();
+void ppm_test(float ratio);
+void motors_test(float ratio);
 
-//dummy function to see if PWM is working
-void dummy_timer(uint16_t value);
-
-void ppm_update(float ratio);
+void ppm_update(motor_t motor, float ratio);
 
 /**
  * Convertit de radians par secondes en commande % de plage PPM (1ms a 2ms)

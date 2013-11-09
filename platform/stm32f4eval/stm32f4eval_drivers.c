@@ -42,6 +42,8 @@
 #define USART2_GPIO_RX GPIO_PIN_3
 /* USART pins : PC10(yellow), PC11(orange) */
 
+#define MOTOR_TIMER_FREQ 4800
+
 static void gpio_drivers_setup();
 static void uart_drivers_setup();
 static void timer_drivers_setup();
@@ -98,8 +100,6 @@ void usart3_isr()
     uart_handle_interrupt(UART_3);
 }
 
-
-
 static void timer_drivers_setup()
 {
     // Configure the General Purpose Timers
@@ -119,8 +119,10 @@ static void timer_drivers_setup()
     timer_select_internal_clock(TIM_3,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
+
+    //start timer 4 for motor control
     timer_select_internal_clock(TIM_4,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
                     - 1);
 
     // Start ALL PWM and other timers
