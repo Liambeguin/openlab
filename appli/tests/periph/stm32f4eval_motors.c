@@ -94,9 +94,8 @@ void ppm_dummy_task(void *arg){
     while (1){
 
     	printf("ratio : %f                    \r", ratio);
-//    	ppm_test(ratio);
+    	motors_ratio(ratio, ratio, ratio, ratio);
 
-    	motors_test(ratio);
     	vTaskDelay(configTICK_RATE_HZ/4);
     }
 }

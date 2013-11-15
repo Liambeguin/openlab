@@ -15,7 +15,7 @@
  * stm32f4eval_periph.c
  *
  *  Created on: 2013-10-13
- *      Author: liam
+ *      Author: liam <liambeguin.at.gmail.com>
  */
 
 #include "stm32f4eval.h"
@@ -88,7 +88,9 @@ static void motors_setup(){
 	};
 
 
-
+	/**
+	 * Enabling GPIOs related to the motors
+	 */
 	uint8_t i;
 	for(i=0; i<sizeof(motors)/sizeof(motors[0]); i++){
 		gpio_enable(motors[i].port);

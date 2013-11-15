@@ -28,13 +28,12 @@
 #include "gpio.h"
 #include "timer.h"
 
-//Variable globale au fichier correspondant aux moteurs du drone.
+//Global declaration corresponding to the drone's motors
 static motor_t _motors[4];
 
 uint16_t _value_0, _value_100, _span;
 
 
-//todo check if config with array worked !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void motors_config(motor_t *motors){
 
 	log_info("[MOTORS] initializing motors ...");
@@ -56,18 +55,17 @@ void motors_config(motor_t *motors){
 	log_info("[MOTORS] timer_frequency : %d Hz\t end count : 0x%04x", timer_get_frequency(motors[0].timer), timer_arr);
 	log_info("\t 0   %% : 0x%04x \n\t 100 %% : 0x%04x \n\t Span  : %d values", _value_0, _value_100, _value_100-_value_0);
 
-	/**
-	 * Starting timer at the frequency set in <platform>_drivers.c
-	 *
-	 * ******* ALL MOTORS SHOULD BE ON SAME TIMER *******
-	 *
-	 */
+
+
+	/**************************
+	 *  ALL MOTORS SHOULD BE ON SAME TIMER
+	 *  Starting timer at the frequency set in <platform>_drivers.c
+	 **************************/
 	timer_start(motors[0].timer, timer_arr, NULL, NULL);
 
-	//todo activate other channels
 	for(i=0; i<sizeof(_motors)/sizeof(_motors[0]); i++){
-		timer_set_channel_compare(motors[i].timer, motors[0].channel, 0, NULL, NULL);
-		timer_activate_channel_output(motors[0].timer, motors[0].channel, TIMER_OUTPUT_MODE_PWM1);
+		timer_set_channel_compare(motors[i].timer, motors[i].channel, 0, NULL, NULL);
+		timer_activate_channel_output(motors[i].timer, motors[i].channel, TIMER_OUTPUT_MODE_PWM1);
 	}
 	log_info("[MOTORS] initialized !!");
 }
@@ -82,36 +80,15 @@ void ppm_update(motor_t motor, float ratio){
 		timer_update_channel_compare(motor.timer, motor.channel, (uint16_t)((float)_span * ratio + (float)_value_0));
 }
 
-//test for a single motor appli
-void ppm_test(float ratio){
 
-	if (ratio < 0.0f || ratio > 1.0f){
-		log_error("PPM Value out of range");
-		return;
-	}
+void motors_ratio(float ratio_0, float ratio_1, float ratio_2, float ratio_3){
 
-	timer_update_channel_compare(_motors[0].timer, _motors[0].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+	ppm_update(_motors[0], ratio_0);
+	ppm_update(_motors[1], ratio_1);
+	ppm_update(_motors[2], ratio_2);
+	ppm_update(_motors[3], ratio_3);
+
 }
-
-//test for a 4 motors appli
-void motors_test(float ratio){
-
-	if (ratio < 0.0f || ratio > 1.0f){
-		log_error("PPM Value out of range");
-		return;
-	}
-
-	timer_update_channel_compare(_motors[0].timer, _motors[0].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
-	timer_update_channel_compare(_motors[1].timer, _motors[1].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
-	timer_update_channel_compare(_motors[2].timer, _motors[2].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
-	timer_update_channel_compare(_motors[3].timer, _motors[3].channel, (uint16_t)((float)_span * ratio + (float)_value_0));
-}
-
-
-
-
-
-
 
 
 

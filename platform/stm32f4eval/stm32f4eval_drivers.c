@@ -23,6 +23,8 @@
  *
  *  Created on: Sep 17, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
+ *      Author: liam <liambeguin.at.gmail.com>
+ *
  */
 
 #include "stm32f4eval.h"

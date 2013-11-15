@@ -32,27 +32,44 @@
 #define MOTOR_SPEED_MAX		(750.00f)
 #define IDLE_POURC_ESC		(  0.06f)
 
-
+/**
+ * definition of a type corresponding to a motor
+ */
 typedef struct {
 
-	timer_t timer;
-	timer_channel_t channel;
-	uint8_t alternate;
-
-	gpio_t port;
-	gpio_pin_t pin;
+	timer_t			timer;
+	timer_channel_t	channel;
+	uint8_t 		alternate;
+	gpio_t 			port;
+	gpio_pin_t 		pin;
 
 }motor_t;
 
+
+/** Configure motor array
+ * Function used to initialize an array of motors.
+ *
+ * note		: All motors should be on the same timer
+ * todo 	: Check if motors can be placed on different timer
+ */
 void motors_config(motor_t *motor);
 
-void ppm_test(float ratio);
-void motors_test(float ratio);
+/** Test for a multiple motor application
+ * Function used to set a ratio on each motor individually
+ *
+ * \param *ratio value corresponding to the speed to apply on
+ * 				 each motor.
+ *
+ * note : ratio_0 goes on motors[0]
+ */
+void motors_ratio(float ratio_0, float ratio_1, float ratio_2, float ratio_3);
+
 
 void ppm_update(motor_t motor, float ratio);
 
 /**
  * Convertit de radians par secondes en commande % de plage PPM (1ms a 2ms)
+ *
  */
 float motors_rad_to_percent(float v);
 
