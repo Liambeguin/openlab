@@ -17,6 +17,15 @@
  *      Author: liam <liambeguin.at.gmail.com>
  */
 
+/**
+ * TODO continue implementing
+ * motors_datastore defined in motors.h
+ *
+ * functions called fill motors_datastore then
+ * call ppm_update to actualize the value
+ *
+ **/
+
 #include <math.h>
 
 #include "platform.h"
@@ -108,7 +117,7 @@ float motors_rad_to_percent(float v) {
                 return  0.01 * ( 0.00011424106 * (v*v) + 0.02670861842 * v ); // equation return in %
 }
 
-void motors_speeds(const float M1, const float M2, const float M3, const float M4) {
+void motors_speeds(const float M0, const float M1, const float M2, const float M3){
 
         //Register motor speed in rad/s
 //        Singleton::get()->data.set(DataStore::M1, M1);
@@ -116,17 +125,23 @@ void motors_speeds(const float M1, const float M2, const float M3, const float M
 //        Singleton::get()->data.set(DataStore::M3, M3);
 //        Singleton::get()->data.set(DataStore::M4, M4);
 
+		motors_datastore.M0 = M0;
+		motors_datastore.M1 = M1;
+		motors_datastore.M2 = M2;
+		motors_datastore.M3 = M3;
+
 
         //Transform in ppm duty, if speed is to low, idle motor !!!!
+        const float V0 = ( M0 > 5 ? motors_rad_to_percent(M0) : IDLE_POURC_ESC);
         const float V1 = ( M1 > 5 ? motors_rad_to_percent(M1) : IDLE_POURC_ESC);
         const float V2 = ( M2 > 5 ? motors_rad_to_percent(M2) : IDLE_POURC_ESC);
         const float V3 = ( M3 > 5 ? motors_rad_to_percent(M3) : IDLE_POURC_ESC);
-        const float V4 = ( M4 > 5 ? motors_rad_to_percent(M4) : IDLE_POURC_ESC);
 
-        ppm_update(_motors[0], V1);
-        ppm_update(_motors[1], V2);
-        ppm_update(_motors[2], V3);
-        ppm_update(_motors[3], V4);
+
+        ppm_update(_motors[0], V0);
+        ppm_update(_motors[1], V1);
+        ppm_update(_motors[2], V2);
+        ppm_update(_motors[3], V3);
 
 }
 
@@ -150,7 +165,7 @@ void motors_kill(){
     log_info("[MOTORS] motors killed !!");
 }
 
-void motors_update(float U1, float U2, float U3, float U4) {
+void motors_update(float U0, float U1, float U2, float U3) {
 
         // Puissance faible, il ne faut pas que les motors arretent
         if (U1 < 0.001) {
@@ -174,22 +189,22 @@ void motors_update(float U1, float U2, float U3, float U4) {
 //        U4 /= Singleton::get()->parameters.get(Parameters::PHYSICS_D);
 
         // Transformations U_i => Omega_i (2/3)
-        float O1 = (U1 + U4 + 2 * U3) / 4;
-        float O2 = (U1 - U4 - 2 * U2) / 4;
-        float O3 = (U1 + U4 - 2 * U3) / 4;
-        float O4 = (U1 - U4 + 2 * U2) / 4;
+        float O0 = (U0 + U3 + 2 * U2) / 4;
+        float O1 = (U0 - U3 - 2 * U1) / 4;
+        float O2 = (U0 + U3 - 2 * U2) / 4;
+        float O3 = (U0 - U3 + 2 * U1) / 4;
 
         // Transformations U_i => Omega_i (3/3)
+        O0 = O0 > 0 ? sqrt(O0) : 0;
         O1 = O1 > 0 ? sqrt(O1) : 0;
         O2 = O2 > 0 ? sqrt(O2) : 0;
         O3 = O3 > 0 ? sqrt(O3) : 0;
-        O4 = O4 > 0 ? sqrt(O4) : 0;
 
         // Enregistrement
 //        Singleton::get()->data.set(DataStore::OMEGA_R, O1 + O3 - O2 - O4);
 
 
         // Envoi de la commande
-        motors_speeds(O1, O2, O3, O4);
+        motors_speeds(O0, O1, O2, O3);
 
 }

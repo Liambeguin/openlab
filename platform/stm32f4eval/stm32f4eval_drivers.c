@@ -220,3 +220,7 @@ void eth_isr()
 {
     ethmac_handle_interrupt();
 }
+void exti15_10_isr()
+{
+    exti_handle_15_10_interrupt();
+}

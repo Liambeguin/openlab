@@ -10,3 +10,7 @@ target_link_libraries(lis302dl platform)
 # Add the MOTORS library
 add_library(motors STATIC motors/motors)
 target_link_libraries(motors platform)
+
+# Add the Radio Control library
+add_library(rc STATIC rc/rc)
+target_link_libraries(rc platform)

@@ -45,6 +45,14 @@ typedef struct {
 
 }motor_t;
 
+struct{
+	float M0;					//!< vitesse calcule de rotation du motor 0 [rad/s]
+	float M1;					//!< vitesse calcule de rotation du motor 1 [rad/s]
+	float M2;					//!< vitesse calcule de rotation du motor 2 [rad/s]
+	float M3;					//!< vitesse calcule de rotation du motor 4 [rad/s]
+	float OMEGA_R;			//!< vitesse residuelle calcule des moteurs M0-M1+M2-M3 [rad/s]
+}motors_datastore;
+
 
 /** Configure motor array
  * Function used to initialize an array of motors.
