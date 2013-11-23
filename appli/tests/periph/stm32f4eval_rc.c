@@ -70,22 +70,6 @@ int main(void){
     platform_run();
 }
 
-static void char_rx(handler_arg_t arg, uint8_t c){
-
-//	log_error("entered : %c", c);
-	if(c == 'z'){
-		rc_trigger();
-		log_info("trigger");
-	}
-	if(c == 'x'){
-		rc_clear();
-		log_info("clear");
-	}
-
-//	checking range of ratio
-	ratio = (ratio <= 0 ? 0 : (ratio >= 1 ? 1 : ratio));
-}
-
 
 
 void rc_dummy_task(void *arg){
@@ -96,9 +80,11 @@ void rc_dummy_task(void *arg){
     leds_off(0xff);
     leds_on(F4_LED_GREEN);
 
-    uart_set_rx_handler(uart_print, char_rx, NULL);
 
-    while(1);
+    while(1){
+    	rc_print_channel_values();
+    	vTaskDelay(configTICK_RATE_HZ/4);
+    }
 
 
 }

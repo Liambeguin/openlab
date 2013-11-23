@@ -25,6 +25,9 @@
 
 
 #include "debug.h"
+#include "stm32f4xx/nvic_.h"
+#include "stm32f4xx/syscfg.h"
+
 
 /** SPI_2 setup **/
 static void spi_setup();
@@ -36,20 +39,16 @@ static void spi_setup();
 static void motors_setup();
 
 /** RC setup **/
-#include "rcc.h"
-#include "exti.h"
-#include "syscfg.h"
-#include "nvic.h"
-#include "nvic_.h"
 #include "rc.h"
 static void rc_setup();
+
 
 
 
 void platform_periph_setup()
 {
 //	spi_setup();
-//	motors_setup();
+	motors_setup();
 	rc_setup();
 }
 
@@ -114,47 +113,54 @@ static void motors_setup(){
 	motors_idle();
 }
 
-
-void test(){
-	static uint32_t last_time;
-
-	if(gpio_pin_read(GPIO_B, GPIO_PIN_10)){
-//		log_error("UP!!");
-		last_time = soft_timer_time();
-	}
-	else{
-//		log_error("DOWN !!");
-//		printf("time : %d                   \r", soft_timer_ticks_to_ms(soft_timer_time()-last_time));
-		printf("time : %d                   \r", soft_timer_time()-last_time);
-	}
-
-}
-
 static void rc_setup(){
 
+	channel_t channels[] = {
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_10,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_11,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_12,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_13,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_14,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_B,
+					.pin = GPIO_PIN_15,
+					.syscfg_port = SYSCFG_PORT_B,
+					.last_time = 0,
+					.value = 0,
+			},
 
-	log_debug("rc_setup");
-
-	//test on orange LED to trigger irq
-	channel_t trigger = {
-			.port = GPIO_D,
-			.pin = GPIO_PIN_13,
 	};
-	rc_config(trigger);
 
-	gpio_enable(trigger.port);
-	gpio_set_output(trigger.port, trigger.pin);
-
-
-	//enabling IRQ
-	gpio_set_input(GPIO_B, GPIO_PIN_10);
-	exti_set_handler(EXTI_LINE_Px10, test, NULL);
-	exti_enable_interrupt_line(EXTI_LINE_Px10, EXTI_TRIGGER_BOTH);
-
-
-	syscfg_select_exti_pin(EXTI_LINE_Px10, SYSCFG_PORT_B);
-	nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI15_10);
+	rc_config_channel(channels);
 }
-
-
 

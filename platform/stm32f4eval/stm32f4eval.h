@@ -38,7 +38,7 @@ void platform_periph_setup();
 void platform_lib_setup();
 void platform_net_setup();
 
-
+//todo should be removed but is ued in spi_dummy test
 uint8_t platform_spi_single(uint8_t tx_buffer);
 
 #endif /* STM32F4EVAL_H_ */

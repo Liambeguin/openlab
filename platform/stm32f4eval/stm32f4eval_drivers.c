@@ -38,13 +38,15 @@
 #include "gpio_.h"
 #include "timer_.h"
 #include "ethmac_.h"
+#include "exti_.h"
+#include "exti.h"
+
+
 
 #define USART2_GPIO_PORT GPIO_A
 #define USART2_GPIO_TX GPIO_PIN_2
 #define USART2_GPIO_RX GPIO_PIN_3
 /* USART pins : PC10(yellow), PC11(orange) */
-
-#define MOTOR_TIMER_FREQ 4800
 
 static void gpio_drivers_setup();
 static void uart_drivers_setup();
@@ -216,9 +218,29 @@ static void ethmac_drivers_setup()
 
     ethmac_init(ETHMAC_MODE_MII, 0);
 }
-void eth_isr()
+void exti0_isr()
 {
-    ethmac_handle_interrupt();
+    exti_handle_interrupt(EXTI_LINE_Px0);
+}
+void exti1_isr()
+{
+    exti_handle_interrupt(EXTI_LINE_Px1);
+}
+void exti2_isr()
+{
+    exti_handle_interrupt(EXTI_LINE_Px2);
+}
+void exti3_isr()
+{
+    exti_handle_interrupt(EXTI_LINE_Px3);
+}
+void exti4_isr()
+{
+    exti_handle_interrupt(EXTI_LINE_Px4);
+}
+void exti9_5_isr()
+{
+    exti_handle_9_5_interrupt();
 }
 void exti15_10_isr()
 {

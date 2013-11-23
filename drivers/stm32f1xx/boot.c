@@ -23,7 +23,6 @@
  *  Created on: Jul 12, 2011
  *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
  */
-
 #include "boot.h"
 
 DEBUG_HANDLER(wwdg_isr);

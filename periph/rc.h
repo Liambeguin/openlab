@@ -22,16 +22,18 @@
 
 //external interrupt
 #include "exti.h"
+#include "stm32f4xx/syscfg.h"
 
-typedef struct{
+typedef struct {
 	gpio_t port;
 	gpio_pin_t pin;
+	syscfg_port_t syscfg_port;
 
+	uint32_t last_time;
+	uint32_t value;
 }channel_t;
 
-//fonction config qui prend un tableau de channels
-void rc_config(channel_t trigger);
-void rc_trigger();
-void rc_clear();
+void rc_config_channel(channel_t *channels);
+void rc_print_channel_values();
 
 #endif /* RC_H_ */

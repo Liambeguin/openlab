@@ -72,13 +72,15 @@ void exti_handle_interrupt(exti_line_t line)
 {
     // Clear interrupt bit
     // Write a 1 to PR to clear its value
-    *exti_get_PR() |= BV(line);
+    *exti_get_PR() = BV(line);
 
-	// Check Handler
-	if (line_handlers[line]) {
-		line_handlers[line](line_handler_args[line]);
-	}
+    // Check Handler
+    if ((*exti_get_IMR() & BV(line)) && (line_handlers[line] != NULL))
+    {
+        line_handlers[line](line_handler_args[line]);
+    }
 }
+
 void exti_handle_9_5_interrupt()
 {
     // check if EXTI lines 5 to 9 triggered the interrupt
