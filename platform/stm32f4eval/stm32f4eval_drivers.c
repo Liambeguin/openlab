@@ -116,10 +116,11 @@ static void timer_drivers_setup()
     timer_select_internal_clock(TIM_3, 0);
     timer_select_internal_clock(TIM_4, 0);
 
-    // Start others timers as 32kHz clock
+    // Start timer 2 for soft_timer
     timer_select_internal_clock(TIM_2,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
                     - 1);
+
     timer_select_internal_clock(TIM_3,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
