@@ -17,149 +17,148 @@
  *      Author: liam <liambeguin.at.gmail.com>
  */
 
+#include <stdint.h>
+#include <stdbool.h>
+//#include <string.h>
 
 #include "gx3.h"
-
-
 #include "gx3_msg.h"
-#include <util/endianess/endianess.h>
+
+#define NO_DEBUG_HEADER
+#include "debug.h"
+#include "uart.h"
+#include "handler.h"
 
 #define GX3_TIME_CONVERT (0.000016f) //GX3 doc p.51 (1/62500)
+#define UNKNOWN_MESSAGE_ID (-1)
 
-#if DEBUG_FLAG_DRIVER_IMU
-#define imu_print_dbg(x) (Singleton::get()->console << (x))
-#define imu_print_dbg_hex(x) (Singleton::get()->console << _HEX(x))
-#else
-#define imu_print_dbg(x)
-#define imu_print_dbg_hex(x)
-#endif
+uart_t _gx3_uart;
 
-//
-//GX3::GX3(Uart * uart) ://
-//	Task(Singleton::get()->parameters.get(Parameters::DT) * 1000.0f /* ms */)
-//	 , FFPParser((cksumfn) gx3sum)
-//	 , uart(uart)
-//	 , sender(uart)
-//	 , imu_alive_check(false)
-//	 , imu_time_cmd_sent_us(0)
-//	 , imu_ang_cmd_sent_count(0)
-//	 , imu_ang_sum_time_reception_us(0)
-//	 , imu_acc_cmd_sent_count(0)
-//	 , imu_acc_sum_time_reception_us(0)
-//	 , is_gyro_calibration_completed(false)
-//	 , is_accel_calibration_sent(false)
-//	 , is_accel_calibration_completed(false)
-//	 , accel_calibration_nb(0)
-//{
-//	print_dbg("\t[Imu] instance created \n\r");
-//}
-//
+uint8_t gx3_alive_check;
+
+//Monitoring data
+uint32_t gx3_time_cmd_sent_us;
+
+uint32_t gx3_ang_cmd_sent_count;
+uint32_t gx3_ang_sum_time_reception_us;
+
+uint32_t gx3_acc_cmd_sent_count;
+uint32_t gx3_acc_sum_time_reception_us;
+
+bool is_gyro_calibration_completed;
+bool is_accel_calibration_sent;
+bool is_accel_calibration_completed;
+uint16_t accel_calibration_nb;
+
+void GX3_init(uart_t uart){
+
+	_gx3_uart = uart;
+
+	gx3_alive_check					= false;
+	gx3_time_cmd_sent_us			= 0;
+	gx3_ang_cmd_sent_count			= 0;
+	gx3_ang_sum_time_reception_us	= 0;
+	gx3_acc_cmd_sent_count			= 0;
+	gx3_acc_sum_time_reception_us	= 0;
+	is_gyro_calibration_completed	= false;
+	is_accel_calibration_sent		= false;
+	is_accel_calibration_completed	= false;
+	accel_calibration_nb			= 0;
+
+	//Setting reception handler used to decode
+	uart_set_rx_handler(_gx3_uart, GX3_rx_handler, NULL);
+
+	log_info("[GX3] instance created \n\r");
+}
 
 int8_t GX3_get_message_length(const uint8_t id)
 {
 	// payload size only
 	if(id == GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST)
 	{
-		return sizeof(gx3_euler_angles_and_angular_rates_response);
+		return sizeof(struct gx3_euler_angles_and_angular_rates_response);
 	}
 	else if(id == GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST)
 	{
-		return sizeof(gx3_accelerations_and_angular_rates_response);
+		return sizeof(struct gx3_accelerations_and_angular_rates_response);
 	}
 	else if(!is_gyro_calibration_completed && id == GX3_CAPTURE_GYRO_BIAS)
 	{
-		return sizeof(gx3_capture_gyro_response);
+		return sizeof(struct gx3_capture_gyro_response);
 	}
 	else if(!is_accel_calibration_completed && id == GX3_WRITE_ACCEL_BIAS)
 	{
-		return sizeof(gx3_write_accel_response);
+		return sizeof(struct gx3_write_accel_response);
 	}
 
 	return UNKNOWN_MESSAGE_ID;
 }
-
 
 void GX3_process_complete_message(const uint8_t id)
 {
 	if (id == GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST)
 	{
 		struct gx3_euler_angles_and_angular_rates_response r;
-		memcpy(&r, get_payload(), sizeof(gx3_euler_angles_and_angular_rates_response));
-//
-		Singleton::get()->data.set(DataStore::ROLL,					bigendian2host(r.roll));
-		Singleton::get()->data.set(DataStore::PITCH,				bigendian2host(r.pitch));
-		Singleton::get()->data.set(DataStore::YAW,					bigendian2host(r.yaw));
-		Singleton::get()->data.set(DataStore::DOT_ROLL,				bigendian2host(r.dot_x));
-		Singleton::get()->data.set(DataStore::DOT_PITCH,			bigendian2host(r.dot_y));
-		Singleton::get()->data.set(DataStore::DOT_YAW,				bigendian2host(r.dot_z));
+		memcpy(&r, get_payload(), sizeof(struct gx3_euler_angles_and_angular_rates_response));
 
-		//Software killswtich
-		Singleton::get()->data.set(DataStore::IMU_ALIVE, 1);
-		imu_alive_check = 5;
+		//TODO Write ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to datastore
+
+//		Software killswtich
+		//TODO Write IMU_ALIVE = 1 to datastore
+		gx3_alive_check = 5;
 
 		//Monitoring
-		imu_ang_cmd_sent_count++;
-		imu_ang_sum_time_reception_us += (Singleton::get()->timer0.get_us_time() - imu_time_cmd_sent_us);
+		gx3_ang_cmd_sent_count++;
+		gx3_ang_sum_time_reception_us += (soft_timer_ticks_to_us(soft_timer_time()) - gx3_time_cmd_sent_us);
 
 	}
 	else if (id == GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST)
 	{
 
 		struct gx3_accelerations_and_angular_rates_response r;
-		memcpy(&r, get_payload(), sizeof(gx3_accelerations_and_angular_rates_response));
+		memcpy(&r, get_payload(), sizeof(struct gx3_accelerations_and_angular_rates_response));
 
 		if(is_accel_calibration_sent)
 		{
 			is_accel_calibration_sent = false;
 			accel_calibration_nb++;
 
-			const float accel_bias_x = Singleton::get()->data.get(DataStore::ACCEL_BIAS_X) + bigendian2host(r.accel_x);
-			const float accel_bias_y = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y) + bigendian2host(r.accel_y);
-			const float accel_bias_z = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z) + (bigendian2host(r.accel_z) + 1.0f);
-
-			Singleton::get()->data.set(DataStore::ACCEL_BIAS_X , accel_bias_x);
-			Singleton::get()->data.set(DataStore::ACCEL_BIAS_Y , accel_bias_y);
-			Singleton::get()->data.set(DataStore::ACCEL_BIAS_Z , accel_bias_z);
+			//TODO write ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to datastore
 
 		}
 		else
 		{
-			Singleton::get()->data.set(DataStore::ACCEL_X,		  bigendian2host(r.accel_x) * PHYSICS_GX3);
-			Singleton::get()->data.set(DataStore::ACCEL_Y,		  bigendian2host(r.accel_y) * PHYSICS_GX3);
-			Singleton::get()->data.set(DataStore::ACCEL_Z,		  bigendian2host(r.accel_z) * PHYSICS_GX3);
+			//TODO write ACCEL_X, ACCEL_Y, ACCEL_Z to datastore
 		}
 
 
-		//KillSwtich
-		Singleton::get()->data.set(DataStore::IMU_ALIVE, 1);
-		imu_alive_check = 5;
+//		KillSwtich
+		//TODO Write IMU_ALIVE = 1 to datastore
+		gx3_alive_check = 5;
 
 		//Monitoring
-		imu_acc_cmd_sent_count++;
-		imu_acc_sum_time_reception_us += (Singleton::get()->timer0.get_us_time() - imu_time_cmd_sent_us);
+		gx3_acc_cmd_sent_count++;
+		gx3_acc_sum_time_reception_us += (soft_timer_ticks_to_us(soft_timer_time()) - gx3_time_cmd_sent_us);
 
 		return;
 	}
 	else if(id == GX3_CAPTURE_GYRO_BIAS)
 	{
 		struct gx3_capture_gyro_response r;
-		memcpy(&r, get_payload(), sizeof(gx3_capture_gyro_response));
+		memcpy(&r, get_payload(), sizeof(struct gx3_capture_gyro_response));
 
-		Singleton::get()->data.set(DataStore::GYRO_BIAS_X , bigendian2host(r.gyro_bias_x));
-		Singleton::get()->data.set(DataStore::GYRO_BIAS_Y,	bigendian2host(r.gyro_bias_y));
-		Singleton::get()->data.set(DataStore::GYRO_BIAS_Z ,	bigendian2host(r.gyro_bias_z));
+		//TODO Write GYRO_BIAS_X, GYRO_BIAS_Y, GYRO_BIAS_Z to Datastore
 
 		//GX3 confirm that calibration is completed
 		is_gyro_calibration_completed = true;
 	}
+
 	else if(id == GX3_WRITE_ACCEL_BIAS)
 	{
 		struct gx3_write_accel_response r;
-		memcpy(&r, get_payload(), sizeof(gx3_write_accel_response));
+		memcpy(&r, get_payload(), sizeof(struct gx3_write_accel_response));
 
-		Singleton::get()->data.set(DataStore::ACCEL_BIAS_X , bigendian2host(r.accel_bias_x));
-		Singleton::get()->data.set(DataStore::ACCEL_BIAS_Y,	 bigendian2host(r.accel_bias_y));
-		Singleton::get()->data.set(DataStore::ACCEL_BIAS_Z , bigendian2host(r.accel_bias_z));
+		//TODO Write ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to Datastore
 
 		//GX3 confirm that calibration is completed
 		is_accel_calibration_completed = true;
@@ -167,44 +166,51 @@ void GX3_process_complete_message(const uint8_t id)
 
 }
 
-//void GX3::periodical()
-//{
-//	if(imu_alive_check)
-//		imu_alive_check--;
-//	else
-//		Singleton::get()->data.set(DataStore::IMU_ALIVE, 0);
-//
-//	*uart << (char) GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST;
-//    *uart << (char) GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST;
-//
-//	//Monitoring
-//	imu_time_cmd_sent_us = Singleton::get()->timer0.get_us_time();
-//}
+void GX3_periodical()
+{
+	if(gx3_alive_check)
+		gx3_alive_check--;
+	else{
+//		TODO write IMU_ALIVE = 0 to datastore
+	}
+
+	uart_transfer(_gx3_uart, (char)GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
+			sizeof((char)GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST));
+	uart_transfer(_gx3_uart, (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
+			sizeof((char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
+
+	//Monitoring
+	gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());
+}
+
+static void GX3_rx_handler(handler_arg_t arg, uint8_t c){
+
+//	FFPParser::decode(c);
+	log_debug("%c", c);
+}
 
 void GX3_decode_uart_rx()
 {
-	int16_t c = 0;
-	while (1)
-	{
-		*uart >> c;
-
-		if(c == EOS) {
-			return;
-		}
-
-		//Monitoring
-		uint32_t begin_us = Singleton::get()->timer0.get_us_time();
-
-		FFPParser::decode(c);
-
-		//Monitoring
-		sum_time_receiving_us += Singleton::get()->timer0.get_us_time() - begin_us;
-	}
-
+//	int16_t c = 0;
+//	while (1)
+//	{
+//		*uart >> c;
+//
+//		if(c == EOS) {
+//			return;
+//		}
+//
+//		//Monitoring
+//		uint32_t begin_us = soft_timer_ticks_to_us(soft_timer_time());
+//
+//		FFPParser::decode(c);
+//
+//		//Monitoring
+//		sum_time_receiving_us += soft_timer_ticks_to_us(soft_timer_time()) - begin_us;
+//	}
 }
 
-void GX3_write_bias()
-{
+void GX3_write_bias(){
 	/*
 	sender <<  (char) GX3_WRITE_GYRO_BIAS;
 	sender <<  (char) GX3_WRITE_GYRO_BIAS_C1;
@@ -231,15 +237,15 @@ void GX3_write_bias()
 void GX3_calibrate()
 {
 
-	Singleton::get()->console.print("[IMU] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ... \n\r");
+	log_info("[GX3] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ... \n\r");
 
 	//Execute Gyro calibration
-	sender <<  (char) GX3_CAPTURE_GYRO_BIAS;
-	sender <<  (char) GX3_CAPTURE_GYRO_BIAS_C1;
-	sender <<  (char) GX3_CAPTURE_GYRO_BIAS_C2;
-	sender <<   GX3_CAPTURE_TIME_MS;
+//	sender <<  (char) GX3_CAPTURE_GYRO_BIAS;
+//	sender <<  (char) GX3_CAPTURE_GYRO_BIAS_C1;
+//	sender <<  (char) GX3_CAPTURE_GYRO_BIAS_C2;
+//	sender <<   GX3_CAPTURE_TIME_MS;
 
-	const uint32_t start = Singleton::get()->timer0.get_us_time();
+	const uint32_t start = soft_timer_ticks_to_us(soft_timer_time());
 
 	while(! is_gyro_calibration_completed)
 	{
@@ -247,43 +253,41 @@ void GX3_calibrate()
 		decode_uart_rx();
 		delay_us(100);
 		//imu_print_dbg("Wait... IMU gyro bias calibration for 10000 : " << elapse << "\n\r");
-		//Singleton::get()->console.println(elapse);
+		//log_infoln(elapse);
 	}
 
-	Singleton::get()->console.print("[IMU] Gyro calibrated with : \n\r");
-	Singleton::get()->console.print("[IMU] GYRO_BIAS_X = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::GYRO_BIAS_X));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] Gyro calibrated with : \n\r");
+	log_info("[GX3] GYRO_BIAS_X = ");
+//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_X));
+	log_info("\n\r");
 
-	Singleton::get()->console.print("[IMU] GYRO_BIAS_Y = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::GYRO_BIAS_Y));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] GYRO_BIAS_Y = ");
+//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_Y));
+	log_info("\n\r");
 
-	Singleton::get()->console.print("[IMU] GYRO_BIAS_Z = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::GYRO_BIAS_Z));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] GYRO_BIAS_Z = ");
+//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_Z));
+	log_info("\n\r");
 
 
-	Singleton::get()->console.print("[IMU] Measuring acceleration for 10s ... \n\r");
+	log_info("[GX3] Measuring acceleration for 10s ... \n\r");
 
 	//Execute Accel calibration
-	const uint32_t end = Singleton::get()->timer0.get_us_time() + 10000000; //Run for 10s
+	const uint32_t end = (soft_timer_ticks_to_us(soft_timer_time()) + 10000000); //Run for 10s
 
-	while(Singleton::get()->timer0.get_us_time() < end)
+	while(soft_timer_ticks_to_us(soft_timer_time()) < end)
 	{
 		if(!is_accel_calibration_sent)
 		{
 			is_accel_calibration_sent = true;
-			*uart << (char) GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST;
+
+			uart_transfer(_gx3_uart, (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
+					sizeof( (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
 		}
 
 		decode_uart_rx();
+		//TODO delay
 		delay_us(100);
-		//imu_print_dbg("Wait... IMU accel bias calibration run for 10s, nb of it : " << accel_calibration_nb << "\n\r");
-		//Singleton::get()->console.print(end);
-		//Singleton::get()->console.print(" > ");
-		//Singleton::get()->console.print(Singleton::get()->timer0.get_us_time());
-		//Singleton::get()->console.print("\n\r");
 	}
 
 	float accel_bias_x = 0;
@@ -292,17 +296,17 @@ void GX3_calibrate()
 
 	if(accel_calibration_nb != 0)
 	{
-		accel_bias_x = Singleton::get()->data.get(DataStore::ACCEL_BIAS_X) / (float)(accel_calibration_nb);
-		accel_bias_y = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y) / (float)(accel_calibration_nb);
-		accel_bias_z = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z) / (float)(accel_calibration_nb);
+//		accel_bias_x = Singleton::get()->data.get(DataStore::ACCEL_BIAS_X) / (float)(accel_calibration_nb);
+//		accel_bias_y = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y) / (float)(accel_calibration_nb);
+//		accel_bias_z = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z) / (float)(accel_calibration_nb);
 	}
 
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS;
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C1;
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C2;
-	sender <<  accel_bias_x;
-	sender <<  accel_bias_y;
-	sender <<  accel_bias_z;
+//	sender <<  (char) GX3_WRITE_ACCEL_BIAS;
+//	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C1;
+//	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C2;
+//	sender <<  accel_bias_x;
+//	sender <<  accel_bias_y;
+//	sender <<  accel_bias_z;
 
 	while(! is_accel_calibration_completed)
 	{
@@ -310,33 +314,33 @@ void GX3_calibrate()
 		delay_us(100);
 	}
 
-	Singleton::get()->console.print("[IMU] Accel calibrated with : \n\r");
-	Singleton::get()->console.print("[IMU] ACCEL_BIAS_X = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::ACCEL_BIAS_X));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] Accel calibrated with : \n\r");
+	log_info("[GX3] ACCEL_BIAS_X = ");
+//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_X));
+	log_info("\n\r");
 
-	Singleton::get()->console.print("[IMU] ACCEL_BIAS_Y = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] ACCEL_BIAS_Y = ");
+//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y));
+	log_info("\n\r");
 
-	Singleton::get()->console.print("[IMU] ACCEL_BIAS_Z = ");
-	Singleton::get()->console.print(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z));
-	Singleton::get()->console.print("\n\r");
+	log_info("[GX3] ACCEL_BIAS_Z = ");
+//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z));
+	log_info("\n\r");
 
 	//Finish calibration
 	is_gyro_calibration_completed  = true;
 	is_accel_calibration_sent	   = true;
 	is_accel_calibration_completed = true;
 
-	Singleton::get()->console.print("[IMU] Calibration done \n\r");
+	log_info("[GX3] Calibration done \n\r");
 
 
-	Singleton::get()->data.set(DataStore::DEBUG_0 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_X));
-	Singleton::get()->data.set(DataStore::DEBUG_1 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y));
-	Singleton::get()->data.set(DataStore::DEBUG_2 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z));
-	Singleton::get()->data.set(DataStore::DEBUG_3 , Singleton::get()->data.get(DataStore::GYRO_BIAS_X));
-	Singleton::get()->data.set(DataStore::DEBUG_4 , Singleton::get()->data.get(DataStore::GYRO_BIAS_Y));
-	Singleton::get()->data.set(DataStore::M1      , Singleton::get()->data.get(DataStore::GYRO_BIAS_Z));
+//	Singleton::get()->data.set(DataStore::DEBUG_0 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_X));
+//	Singleton::get()->data.set(DataStore::DEBUG_1 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y));
+//	Singleton::get()->data.set(DataStore::DEBUG_2 , Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z));
+//	Singleton::get()->data.set(DataStore::DEBUG_3 , Singleton::get()->data.get(DataStore::GYRO_BIAS_X));
+//	Singleton::get()->data.set(DataStore::DEBUG_4 , Singleton::get()->data.get(DataStore::GYRO_BIAS_Y));
+//	Singleton::get()->data.set(DataStore::M1      , Singleton::get()->data.get(DataStore::GYRO_BIAS_Z));
 
 
 }

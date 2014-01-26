@@ -30,9 +30,9 @@
 
 
 /** SPI_2 setup **/
-static void spi_setup();
-#define CS_PORT GPIO_C
-#define CS_PIN 	GPIO_PIN_3
+static void accelero_setup();
+#define CHIP_SELECT_PORT	GPIO_E
+#define CHIP_SELECT_PIN		GPIO_PIN_3
 
 /** PWM setup **/
 #include "motors.h"
@@ -42,30 +42,56 @@ static void motors_setup();
 #include "rc.h"
 static void rc_setup();
 
-
-
+//static void gx3_setup();
 
 void platform_periph_setup()
 {
-//	spi_setup();
-	motors_setup();
+//	accelero_setup();
+//	motors_setup();
 	rc_setup();
 }
 
-static void spi_setup(){
+static void accelero_setup(){
 
-	gpio_enable(CS_PORT);
-	gpio_set_output(CS_PORT, CS_PIN);
-	gpio_config_output_type(CS_PORT, CS_PIN, GPIO_TYPE_PUSH_PULL);
-	gpio_config_pull_up_down(CS_PORT, CS_PIN, GPIO_PULL_UP);
-
-	//set Chip Select
-	gpio_pin_set(CS_PORT, CS_PIN);
+	lis302dl_config(SPI_1, CHIP_SELECT_PORT, CHIP_SELECT_PIN);
+	lis302dl_init();
 }
 
 static void motors_setup(){
 
-
+#define TIM_TEST
+#ifdef TIM_TEST
+	motor_t motors[] = {
+			{
+					.timer 		= TIM_1,
+					.channel	= TIMER_CHANNEL_1,
+					.alternate 	= GPIO_AF_1,
+					.port 		= GPIO_E,
+					.pin 		= GPIO_PIN_9
+			},
+			{
+					.timer 		= TIM_1,
+					.channel	= TIMER_CHANNEL_2,
+					.alternate 	= GPIO_AF_1,
+					.port 		= GPIO_E,
+					.pin 		= GPIO_PIN_11
+			},
+			{
+					.timer 		= TIM_1,
+					.channel	= TIMER_CHANNEL_3,
+					.alternate 	= GPIO_AF_1,
+					.port 		= GPIO_E,
+					.pin 		= GPIO_PIN_13
+			},
+			{
+					.timer 		= TIM_1,
+					.channel	= TIMER_CHANNEL_4,
+					.alternate 	= GPIO_AF_1,
+					.port 		= GPIO_E,
+					.pin 		= GPIO_PIN_14
+			}
+	};
+#else
 	//array containing the configuration of the different motors
 	motor_t motors[] = {
 			{
@@ -96,8 +122,8 @@ static void motors_setup(){
 					.port 		= GPIO_B,
 					.pin 		= GPIO_PIN_9
 			}
-
 	};
+#endif
 
 
 	/**

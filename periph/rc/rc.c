@@ -30,14 +30,8 @@
 #include "stm32f4xx/nvic_.h"
 
 
-/** TODO
- *
- *  voir pour augmenter la frequence de la
- *  clock liee aux exti pour avoir une plus
- *  grande sensibilite sur la manette
- *
- *  voir dans stm32f4eval.c pour les clocks du sys
- *
+/**
+ * To change span, change timer frequency in <platform>_lib.c
  */
 
 channel_t _channel[6];

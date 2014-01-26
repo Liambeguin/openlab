@@ -10,14 +10,26 @@
 #     Author: liam
 #
 
-#adding SPI_2 dummy test 
-add_executable(test_stm32f4eval_spi2 stm32f4eval_spi2)
-target_link_libraries(test_stm32f4eval_spi2 platform )
+#adding void test task 
+add_executable(test_periph_void void.c)
+target_link_libraries(test_periph_void platform )
 
 #adding PWM dummy test
-add_executable(test_stm32f4eval_motors stm32f4eval_motors)
-target_link_libraries(test_stm32f4eval_motors platform )
+add_executable(test_periph_motors motors)
+target_link_libraries(test_periph_motors platform )
 
 #adding RC dummy test
-add_executable(test_stm32f4eval_rc stm32f4eval_rc)
-target_link_libraries(test_stm32f4eval_rc platform )
+add_executable(test_periph_rc rc)
+target_link_libraries(test_periph_rc platform )
+
+#adding LED dummy test
+add_executable(test_periph_tlc59116 tlc59116)
+target_link_libraries(test_periph_tlc59116 platform )
+
+#adding GX3 dummy test
+add_executable(test_periph_gx3 gx3)
+target_link_libraries(test_periph_gx3 platform )
+
+#adding LIS302DL dummy test
+add_executable(test_periph_lis302dl lis302dl)
+target_link_libraries(test_periph_lis302dl platform )

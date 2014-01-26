@@ -14,3 +14,11 @@ target_link_libraries(motors platform)
 # Add the Radio Control library
 add_library(rc STATIC rc/rc)
 target_link_libraries(rc platform)
+
+# Add the GX3 library
+add_library(gx3 STATIC GX3/gx3)
+target_link_libraries(gx3 platform)
+
+# Add the TCL59116 library
+add_library(tlc59116 STATIC tlc59116/tlc59116)
+target_link_libraries(tlc59116 platform)

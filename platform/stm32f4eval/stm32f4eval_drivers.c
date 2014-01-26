@@ -41,6 +41,8 @@
 #include "exti_.h"
 #include "exti.h"
 
+#define I2C_ADDR (uint8_t)0x94
+
 
 
 #define USART2_GPIO_PORT GPIO_A
@@ -53,6 +55,7 @@ static void uart_drivers_setup();
 static void timer_drivers_setup();
 static void ethmac_drivers_setup();
 static void spi_drivers_setup();
+static void i2c_drivers_setup();
 
 void platform_drivers_setup()
 {
@@ -60,23 +63,49 @@ void platform_drivers_setup()
     uart_drivers_setup();
     timer_drivers_setup();
 
-    spi_drivers_setup();
+//    spi_drivers_setup();
+    i2c_drivers_setup();
+
+    exti_set_handler(EXTI_LINE_Px0, NULL, NULL);
 
 //    ethmac_drivers_setup();
 }
 
+static void i2c_drivers_setup(){
+
+
+	gpio_set_output(GPIO_D, GPIO_PIN_4);
+	gpio_pin_set(GPIO_D, GPIO_PIN_4);
+
+	//I2C 2 config for Audio driver
+	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_9);
+	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_6);
+
+	i2c_enable(I2C_1, I2C_CLOCK_MODE_STANDARD);
+
+	//read from addr 0x01 and auto increment
+	uint8_t reg = 0x81;
+//	uint8_t tmp[10] = {0};
+
+//	i2c_tx(I2C_1, I2C_ADDR, &reg, 1);
+//	i2c_rx(I2C_1, I2C_ADDR, tmp, 4);
+
+//	i2c_tx_rx(I2C_1, I2C_ADDR, &reg, 1, &tmp, 1);
+
+//	log_debug("I2C OK !! [0x%02x][0x%02x][0x%02x][0x%02x]", tmp[0], tmp[1], tmp[2], tmp[3]);
+}
+
 static void spi_drivers_setup()
 {
-	//SPI2 config
-	gpio_set_spi_clk(GPIO_B, GPIO_PIN_13);
-	gpio_set_spi_miso(GPIO_B, GPIO_PIN_14);
-	gpio_set_spi_mosi(GPIO_B, GPIO_PIN_15);
-	spi_enable(SPI_2, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
+	//LIS302DL accelerometer config
+	gpio_set_spi_clk(GPIO_A, GPIO_PIN_5);
+	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
+	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
+	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_HIGH_FALLING);
 }
 
 static void gpio_drivers_setup()
 {
-    // Set base address and AHB bit for all GPIO ports
     gpio_enable(GPIO_A);
     gpio_enable(GPIO_B);
     gpio_enable(GPIO_C);
@@ -107,14 +136,24 @@ void usart3_isr()
 static void timer_drivers_setup()
 {
     // Configure the General Purpose Timers
+	timer_enable(TIM_1);
+
+	//TIM_2 used for soft timer in <platform>_lib.c
     timer_enable(TIM_2);
+
     timer_enable(TIM_3);
     timer_enable(TIM_4);
 
     // Select the clocks for all timers
+    timer_select_internal_clock(TIM_1, 0);
     timer_select_internal_clock(TIM_2, 0);
     timer_select_internal_clock(TIM_3, 0);
     timer_select_internal_clock(TIM_4, 0);
+
+    // Start timer 2 for soft_timer
+    timer_select_internal_clock(TIM_1,
+    		(rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
+    		- 1);
 
     // Start timer 2 for soft_timer
     timer_select_internal_clock(TIM_2,
@@ -131,6 +170,7 @@ static void timer_drivers_setup()
                     - 1);
 
     // Start ALL PWM and other timers
+    timer_start(TIM_1, 0xFFFF, NULL, NULL);
     timer_start(TIM_2, 0xFFFF, NULL, NULL);
     timer_start(TIM_3, 0xFFFF, NULL, NULL);
     timer_start(TIM_4, 0xFFFF, NULL, NULL);
@@ -139,10 +179,23 @@ static void timer_drivers_setup()
 
 
 
-void tim1_isr()
+void tim1_brk_tim9_isr()
 {
     timer_handle_interrupt(TIM_1);
 }
+void tim1_up_tim10_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
+void tim1_trg_com_tim11_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
+void tim1_cc_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
+
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);
@@ -246,4 +299,22 @@ void exti9_5_isr()
 void exti15_10_isr()
 {
     exti_handle_15_10_interrupt();
+}
+void i2c1_ev_isr()
+{
+    i2c_handle_ev_interrupt(I2C_1);
+}
+
+void i2c1_er_isr()
+{
+    i2c_handle_er_interrupt(I2C_1);
+}
+void i2c2_ev_isr()
+{
+    i2c_handle_ev_interrupt(I2C_2);
+}
+
+void i2c2_er_isr()
+{
+    i2c_handle_er_interrupt(I2C_2);
 }
