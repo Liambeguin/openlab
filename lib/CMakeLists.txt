@@ -54,3 +54,7 @@ endif(${PLATFORM_HAS_SD})
 
 add_library(packet STATIC packet/packet packet/packet_storage)
 target_link_libraries(packet freertos)
+
+
+# Create the SCP library
+add_library(scp STATIC SCP/sender SCP/util)
