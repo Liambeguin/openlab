@@ -10,26 +10,47 @@
 #     Author: liam
 #
 
-#adding void test task 
+# Adding void test task 
 add_executable(test_periph_void void.c)
 target_link_libraries(test_periph_void platform )
 
-#adding PWM dummy test
-add_executable(test_periph_motors motors)
-target_link_libraries(test_periph_motors platform )
+# Adding uart chain test
+add_executable(test_periph_uart_chain full_uart.c)
+target_link_libraries(test_periph_uart_chain platform)
 
-#adding RC dummy test
-add_executable(test_periph_rc rc)
-target_link_libraries(test_periph_rc platform )
 
-#adding LED dummy test
-add_executable(test_periph_tlc59116 tlc59116)
-target_link_libraries(test_periph_tlc59116 platform )
 
-#adding GX3 dummy test
-add_executable(test_periph_gx3 gx3)
-target_link_libraries(test_periph_gx3 platform )
+# Adding Motors test
+if(${PLATFORM_HAS_MOTORS})
+	add_executable(test_periph_motors motors)
+	target_link_libraries(test_periph_motors platform )
+endif(${PLATFORM_HAS_MOTORS})
 
-#adding LIS302DL dummy test
-add_executable(test_periph_lis302dl lis302dl)
-target_link_libraries(test_periph_lis302dl platform )
+
+# Adding RC test
+if(${PLATFORM_HAS_RC})
+	add_executable(test_periph_rc rc)
+	target_link_libraries(test_periph_rc platform )
+endif(${PLATFORM_HAS_RC})
+
+
+# Adding TLC59116 test
+if(${PLATFORM_HAS_TLC59116})
+	add_executable(test_periph_tlc59116 tlc59116)
+	target_link_libraries(test_periph_tlc59116 platform )
+endif(${PLATFORM_HAS_TLC59116})
+
+
+# Adding GX3 test
+if(${PLATFORM_HAS_GX3})
+	add_executable(test_periph_gx3 gx3)
+	target_link_libraries(test_periph_gx3 platform )
+endif(${PLATFORM_HAS_GX3})
+
+
+# Adding LIS302DL test
+if(${PLATFORM_HAS_LIS302DL})
+	add_executable(test_periph_lis302dl lis302dl)
+	target_link_libraries(test_periph_lis302dl platform )
+endif(${PLATFORM_HAS_LIS302DL})
+

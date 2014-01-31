@@ -18,13 +18,6 @@
  */
 
 
-
-
-
-
-
-
-
 #include <stdint.h>
 #include "printf.h"
 #define NO_DEBUG_HEADER
@@ -32,13 +25,10 @@
 
 #include "platform.h"
 #include "tlc59116.h"
-#define PAUSE 100
-#define MAX_COLOR 0xE0
+#define PAUSE 10
+#define MAX_COLOR 0xFF
 
-#include "FreeRTOS.h"
-#include "task.h"
 
-void tlc59116_task(void *arg);
 void set_all_led(uint8_t r, uint8_t g, uint8_t b);
 
 int main(void){
@@ -53,33 +43,6 @@ int main(void){
 
 	printf("\n\n TLC59116 task test"
 			"\n -------------------\n");
-
-
-	/**
-	 * Creating Empty task to test driver and/or periph stack
-	 */
-	ret =   xTaskCreate(tlc59116_task, (const signed char * const) "tlc59116_test",
-			configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-
-	switch (ret)
-	{
-	case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
-		printf("Error: Could not allocate required memory\n");
-		while (1);
-		return 0;
-
-	default:
-		printf("test task created successfully\n");
-	}
-
-	// Start the scheduler
-	platform_run();
-}
-
-void tlc59116_task(void *arg){
-
-	// arg is not used
-	(void) arg;
 
 	uint8_t x;
 

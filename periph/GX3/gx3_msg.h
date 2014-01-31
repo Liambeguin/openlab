@@ -18,19 +18,31 @@
  *
  *
  *      Ref: http://files.microstrain.com/3DM-GX3-25%20Single%20Byte%20Data%20Communications%20Protocol.pdf
+ *
+ *      GX3 ENDIANESS : Big Endian
  */
 
 #ifndef GX3_MSG_H_
 #define GX3_MSG_H_
 
+#define UNKNOWN_MESSAGE_ID (-1)
+
+#define GX3_READ_DEVICE_ID_STRING_SIZE										2
+#define GX3_CAPTURE_GYRO_BIAS_SIZE 											5
+#define GX3_WRITE_ACCEL_BIAS_SIZE											3
+#define GX3_WRITE_GYRO_BIAS_SIZE 											3
+#define GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE 					1
+#define GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE 					1
+#define GX3_ORIENTATION_MATRIX_REQUEST_SIZE 								1
+#define GX3_ACCELERATION_ANGULAR_RATE_ORIENTATION_MATRIX_REQUEST_SIZE 		1
+#define GX3_SCALED_MAGNETOMETER_VECTOR_REQUEST_SIZE 						1
+#define GX3_EULER_ANGLES_REQUEST_SIZE 										1
+
+
+// Get String ID
+static const uint8_t GX3_READ_DEVICE_ID_STRING[] = {0xEA, 0x02};
 // Capture Gyro Bias
-// Send message in this order !!!
-static const uint8_t  GX3_CAPTURE_GYRO_BIAS	   = 0xCD;
-static const uint8_t  GX3_CAPTURE_GYRO_BIAS_C1 = 0xC1;
-static const uint8_t  GX3_CAPTURE_GYRO_BIAS_C2 = 0x29;
-static const uint16_t GX3_CAPTURE_TIME_MS	   = 10000; //<------ Time to send for the calibration
-
-
+static const uint8_t GX3_CAPTURE_GYRO_BIAS[] = {0xCD, 0xC1, 0x29, 0x27, 0x10};
 struct gx3_capture_gyro_response {
 	float gyro_bias_x;
 	float gyro_bias_y;
@@ -39,10 +51,7 @@ struct gx3_capture_gyro_response {
 };
 
 // Write Accel Bias
-static const uint8_t GX3_WRITE_ACCEL_BIAS	 = 0xC9;
-static const uint8_t GX3_WRITE_ACCEL_BIAS_C1 = 0xB7;
-static const uint8_t GX3_WRITE_ACCEL_BIAS_C2 = 0x44;
-
+static const uint8_t GX3_WRITE_ACCEL_BIAS[] = {0xC9, 0xB7, 0x44};
 struct gx3_write_accel_response {
 	float accel_bias_x;
 	float accel_bias_y;
@@ -52,10 +61,7 @@ struct gx3_write_accel_response {
 
 
 // Write Gyro Bias
-static const uint8_t GX3_WRITE_GYRO_BIAS	= 0xCA;
-static const uint8_t GX3_WRITE_GYRO_BIAS_C1 = 0x12;
-static const uint8_t GX3_WRITE_GYRO_BIAS_C2 = 0xA5;
-
+static const uint8_t GX3_WRITE_GYRO_BIAS[] = {0xCA, 0x12, 0xA5};
 struct gx3_write_gyro_response {
 	float gyro_bias_x;
 	float gyro_bias_y;
@@ -63,11 +69,8 @@ struct gx3_write_gyro_response {
 	uint32_t timer;
 };
 
-
-
-
 // GX3 request and response data structure
-static const uint8_t GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST = 0xCF;
+static const uint8_t GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST[] = {0xCF};
 struct gx3_euler_angles_and_angular_rates_response {
 	float roll;
 	float pitch;
@@ -78,7 +81,7 @@ struct gx3_euler_angles_and_angular_rates_response {
 	uint32_t timer;
 };
 // GX3 request and response data structure
-static const uint8_t GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST = 0xC2;
+static const uint8_t GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST[] = {0xC2};
 struct gx3_accelerations_and_angular_rates_response {
 	float accel_x;
 	float accel_y;
@@ -88,7 +91,7 @@ struct gx3_accelerations_and_angular_rates_response {
 	float dot_z; // vit yaw
 	uint32_t timer;
 };
-static const uint8_t GX3_ORIENTATION_MATRIX_REQUEST = 0xC5;
+static const uint8_t GX3_ORIENTATION_MATRIX_REQUEST[] = {0xC5};
 struct gx3_orientation_matrix_response {
 	float m11;
 	float m12;
@@ -101,7 +104,7 @@ struct gx3_orientation_matrix_response {
 	float m33;
 	uint32_t timer;
 };
-static const uint8_t GX3_ACCELERATION_ANGULAR_RATE_ORIENTATION_MATRIX_REQUEST = 0xC8;
+static const uint8_t GX3_ACCELERATION_ANGULAR_RATE_ORIENTATION_MATRIX_REQUEST[] = {0xC8};
 struct gx3_acceleration_angular_rate_orientation_matrix_response {
 	float accel_x;
 	float accel_y;
@@ -120,14 +123,14 @@ struct gx3_acceleration_angular_rate_orientation_matrix_response {
 	float m33;
 	uint32_t timer;
 };
-static const uint8_t GX3_SCALED_MAGNETOMETER_VECTOR_REQUEST = 0xC7;
+static const uint8_t GX3_SCALED_MAGNETOMETER_VECTOR_REQUEST[] = {0xC7};
 struct gx3_scaled_magnetometer_vector {
 	float mag_x;
 	float mag_y;
 	float mag_z;
 	uint32_t timer;
 };
-static const uint8_t GX3_EULER_ANGLES_REQUEST = 0xCE;
+static const uint8_t GX3_EULER_ANGLES_REQUEST[] = {0xCE};
 struct gx3_euler_angles_response {
 	float roll;
 	float pitch;

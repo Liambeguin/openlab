@@ -19,9 +19,12 @@
 
 
 #include <string.h> // memcpy
-#include "scp_parser.h"
+#include "./scp_parser.h"
+#include "../../gx3.h"
 #include "util.h"
 
+
+//#define DEBUG_FLAG_DRIVER_SCP_PARSER 1
 
 #if DEBUG_FLAG_DRIVER_SCP_PARSER
 #define scp_print_dbg(x...)   printf(x)
@@ -33,7 +36,7 @@
 
 
 /** Taille du buffer de reception */
-static const uint8_t SCP_BUFF_SIZE = 127 + 1 + 2;
+#define SCP_BUFF_SIZE (127 + 1 + 2)
 
 /** Tampon de réception/décodage **/
 uint8_t buff[SCP_BUFF_SIZE];
@@ -55,17 +58,20 @@ void SCP_reset(){
 	bytes_to_read 	= 0;
 }
 
+inline void* SCP_get_payload() {
+	return buff + 1;
+}
+
 void SCP_init(){
 	sum_time_receiving_us = 0;
 	SCP_reset();
 }
 
-
 uint8_t SCP_decode(const char c) {
 	switch (state) {
 		case LOOKING_FOR_KNOWN_MESSAGE_ID: {
 			// is the received char known ?
-			bytes_to_read = SCP_get_message_length(c);
+			bytes_to_read = GX3_get_message_length(c);
 			if (bytes_to_read != UNKNOWN_MESSAGE_ID) {
 				bytes_to_read += 1 + 2; // id and checksum size
 				// it is a known message
@@ -94,7 +100,7 @@ uint8_t SCP_decode(const char c) {
 uint8_t SCP_handle_completed_message() {
 	uint8_t ret = SCPPARSER_OK;
 
-	//scp_print_dbg("st:" << (int)state << " bc:" << (int)buff_count << " btr:" << bytes_to_read << "\n");
+//	scp_print_dbg("st: %d  bc: %d btr: %d\n",  state, buff_count, bytes_to_read);
 
 	if (state == RECEIVING_KNOWN_MESSAGE && buff_count >= bytes_to_read) {
 		// a complete message is ready to be validated.
@@ -111,7 +117,7 @@ uint8_t SCP_handle_completed_message() {
 			// valid checksum
 
 			// process message
-			SCP_process_complete_message(id);
+			GX3_process_complete_message(id);
 
 			buffer_cursor_pos = bytes_to_read;
 		} else {
@@ -125,7 +131,7 @@ uint8_t SCP_handle_completed_message() {
 		if (buffer_cursor_pos < buff_count) {
 			// try to find a valid message in remaining buffer bytes (starting from buffer_cursor_pos)
 			do {
-				bytes_to_read = SCP_get_message_length(buff[buffer_cursor_pos]);
+				bytes_to_read = GX3_get_message_length(buff[buffer_cursor_pos]);
 				if (bytes_to_read != UNKNOWN_MESSAGE_ID) {
 					bytes_to_read += 1 + 2; // id and checksum size
 

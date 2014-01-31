@@ -28,50 +28,95 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "gx3.h"
 
-void gx3_dummy_task(void *arg);
+void gx3_periodical_task(void *arg);
+void gx3_decode_task(void *arg);
 
-int main(void){
+void gx3_periodical_task(void *arg){
 
+    // arg is not used
+    (void) arg;
+
+    while (1){
+    	GX3_periodical();
+    	vTaskDelay(configTICK_RATE_HZ/4);
+
+    }
+}
+
+
+void gx3_decode_task(void *arg){
+
+    // arg is not used
+    (void) arg;
+
+    while (1){
+    	GX3_decode_uart_rx();
+    	vTaskDelay(configTICK_RATE_HZ/100);
+
+    }
+}
+
+
+
+int main()
+{
+    xTaskHandle blink_handle, hello_handle;
     signed portBASE_TYPE ret;
 
-	//init platform
-	platform_init();
-	printf("\n\n Test of dummy GX3"
-				"\n -------------------\n");
+    // Initialize the platform
+    platform_init();
 
-	// Set led to show device is on
+    printf("FreeRTOS Test Program\n");
+
+    // Set initial values
     leds_on(LED_0);
+    leds_off(LED_1);
 
-    // Create a task to read whoami
-    ret =   xTaskCreate(gx3_dummy_task, (const signed char * const) "GX3_dummy",
-                configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    // Create a task to blink
+    ret = xTaskCreate(gx3_decode_task, (const signed char * const) "gx3_decode_task",
+                      configMINIMAL_STACK_SIZE, NULL, 1, &blink_handle);
 
     switch (ret)
     {
         case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
             printf("Error: Could not allocate required memory\n");
-            while (1);
+
+            while (1)
+            {
+                ;
+            }
+
             return 0;
 
         default:
-            printf("GX3_dummy task created successfully\n");
+            printf("Blink task created successfully\n");
+    }
+
+    // Create a task to print hello world
+    xTaskCreate(gx3_periodical_task, (const signed char * const) "gx3_periodical_task",
+                configMINIMAL_STACK_SIZE, NULL, 1, &hello_handle);
+
+    switch (ret)
+    {
+        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
+            printf("Error: Could not allocate required memory\n");
+
+            while (1)
+            {
+                ;
+            }
+
+            return 0;
+
+        default:
+            printf("Hello task created successfully\n");
     }
 
     // Start the scheduler
     platform_run();
+
+    return 0;
 }
 
-void gx3_dummy_task(void *arg){
-
-    // arg is not used
-    (void) arg;
-
-    uint8_t test = 'a';
-
-    while (1){
-//    	uart_transfer(uart_external, &test, 1);
-    	vTaskDelay(configTICK_RATE_HZ/4);
-
-    }
-}

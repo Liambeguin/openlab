@@ -20,68 +20,49 @@
 
 
 
-#include <stdint.h>
 #include "printf.h"
 #define NO_DEBUG_HEADER
 #include "debug.h"
 
+#include <stdint.h>
 #include "platform.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "gx3.h"
 
-void void_task(void *arg);
-
-int main(void){
-
-	signed portBASE_TYPE ret;
-
-	//init platform
-	platform_init();
+int main()
+{
+    // Initialize the platform
+    platform_init();
 
     // Set initial values
     leds_off(0xff);
-
-	printf("\n\n VOID task test"
+	printf("\n\n VOID task"
 			"\n -------------------\n");
 
-
-	/**
-	 * Creating Empty task to test driver and/or periph stack
-	 */
-	ret =   xTaskCreate(void_task, (const signed char * const) "void",
-			configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-
-	switch (ret)
-	{
-	case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
-		printf("Error: Could not allocate required memory\n");
-		while (1);
-		return 0;
-
-	default:
-		printf("VOID task created successfully\n");
-	}
-
-	// Start the scheduler
-	platform_run();
-}
-
-void void_task(void *arg){
-
-	// arg is not used
-	(void) arg;
     uint8_t count = 0;
 
+//    gx3_test();
 
-	while (1)
-	{
-		leds_off(0xFF);
-		leds_on(count++);
-    	vTaskDelay(configTICK_RATE_HZ/4);
-	}
+//    int i=0;
+//    for (i = 0; i < 0x80000; i++)
+//            {
+//                __asm__("nop");
+//            }
+
+//    get_test();
+
+    while (1);
+    {
+        int i;
+
+        for (i = 0; i < 0x80000; i++)
+        {
+            __asm__("nop");
+        }
+
+        leds_off(0xFF);
+        leds_on(count++);
+    }
+
+    return 0;
 }
-
-
-
-

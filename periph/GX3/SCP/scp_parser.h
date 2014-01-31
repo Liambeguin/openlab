@@ -52,6 +52,8 @@ enum {
 void SCP_reset();
 void SCP_init();
 
+inline void* SCP_get_payload();
+
 uint8_t SCP_decode(const char data);
 uint8_t SCP_handle_completed_message();
 
@@ -66,15 +68,15 @@ int8_t SCP_get_message_length(const uint8_t id);
 /** Doit traiter un payload de message complet et valide.
  ** @note Les données à interpréter sont "id" pour l'identifiant et get() pour le contenu
  **/
-void SCP_process_complete_message(const uint8_t id);
+//void SCP_process_complete_message(const uint8_t id);
 
 /** Fonction appelée pour récupérer le payload
  ** @note L'appel ne s'effectue que si le message en buffer est valide
  **/
-inline int get(void* dst, int len) {
-	memcpy(dst, buff + 1, len);
-	return len;
-}
+//inline int get(void* dst, int len) {
+//	memcpy(dst, buff + 1, len);
+//	return len;
+//}
 
 
 /*! Fonction qui sert a calcule combien de temps l'algorithme passe a traite les donnees en reception

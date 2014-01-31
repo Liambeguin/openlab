@@ -23,14 +23,12 @@
 #include "util.h"
 #include "endianess.h"
 
-#include "uart.h"
+//#include "uart.h"
 
-uart_t _scp_uart;
+//uart_t _scp_uart;
 uint16_t bsdsum;
 
-SCP_init(uart_t uart){
-
-	_scp_uart = uart;
+SCP_init(){
 	bsdsum = 0;
 
 }
@@ -38,7 +36,7 @@ SCP_init(uart_t uart){
 
 void SCP_send(const uint8_t data) {
 	bsdsum = crc16_byte(bsdsum, data);
-	uart_transfer(_scp_uart, data, sizeof(data));
+//	uart_transfer(_scp_uart, data, 1);
 }
 
 void SCP_send_n(uint8_t nb, const uint8_t * data) {
