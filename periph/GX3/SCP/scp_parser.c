@@ -23,11 +23,14 @@
 #include "../../gx3.h"
 #include "util.h"
 
+#include "debug.h"
 
-//#define DEBUG_FLAG_DRIVER_SCP_PARSER 1
+
+#define DEBUG_FLAG_DRIVER_SCP_PARSER 1
+//#define PRINT_AFTER_CHKSUM
 
 #if DEBUG_FLAG_DRIVER_SCP_PARSER
-#define scp_print_dbg(x...)   printf(x)
+#define scp_print_dbg(x...)   log_debug(x)
 #define UNUSED
 #else
 #define scp_print_dbg(x...)   do { } while(0)
@@ -58,8 +61,24 @@ void SCP_reset(){
 	bytes_to_read 	= 0;
 }
 
-inline void* SCP_get_payload() {
-	return buff + 1;
+uint8_t test[] =
+{
+		0xCF,
+		0x00, 0x00, 0x80, 0x40,	// roll
+		0x00, 0x00, 0x80, 0x40,	// pitch
+		0x00, 0x00, 0x80, 0x40,	// yaw
+		0x00, 0x00, 0x80, 0x40, // dot_x
+		0x00, 0x00, 0x80, 0x40, // dot_y
+		0x00, 0x00, 0x80, 0x40, // dot_z
+		0x00, 0x00, 0x00, 0x0A	// timer
+};
+
+
+
+inline int SCP_get(void* dst, int len) {
+//	memcpy(dst, buff + 1, len);
+	memcpy(dst, test+1, len);
+	return len;
 }
 
 void SCP_init(){
@@ -79,9 +98,7 @@ uint8_t SCP_decode(const char c) {
 				state = RECEIVING_KNOWN_MESSAGE;
 				buff[buff_count++] = c;
 			} else {
-
-				scp_print_dbg(" Error invalid id : ");
-				scp_print_dbg(id);
+//				log_error("Invalid id : 0x%02x ", id);
 
 				// unknown message, nothing left to do
 				return SCPPARSER_ERROR;
@@ -94,19 +111,26 @@ uint8_t SCP_decode(const char c) {
 		}
 	}
 
+
 	return SCP_handle_completed_message();
 }
 
+//TODO error on chksum in this function
 uint8_t SCP_handle_completed_message() {
 	uint8_t ret = SCPPARSER_OK;
+
 
 //	scp_print_dbg("st: %d  bc: %d btr: %d\n",  state, buff_count, bytes_to_read);
 
 	if (state == RECEIVING_KNOWN_MESSAGE && buff_count >= bytes_to_read) {
 		// a complete message is ready to be validated.
 
-		// calculate received checksum
-		uint16_t calculatedChkSum = crc16(0x0000, buff, bytes_to_read - 2);
+		// calculate received checksum (sum up received bytes)
+//		uint16_t calculatedChkSum = crc16(0x0000, buff, bytes_to_read - 2);
+		uint16_t calculatedChkSum = 0, i;
+		for(i=0; i<bytes_to_read-2; i++){
+			calculatedChkSum += buff[i];
+		}
 
 		// get message checksum field
 		uint16_t buffChkSum = buff[bytes_to_read - 2] << 8 | buff[bytes_to_read - 1];
@@ -115,6 +139,15 @@ uint8_t SCP_handle_completed_message() {
 
 		if (buffChkSum == calculatedChkSum) {
 			// valid checksum
+
+#ifdef PRINT_AFTER_CHKSUM
+			printf("scp buffer ");
+			int a=0;
+			for(a=0; a<28; a++){
+				printf("[0x%02x] ", buff[a]);
+			}
+			printf("\n");
+#endif
 
 			// process message
 			GX3_process_complete_message(id);

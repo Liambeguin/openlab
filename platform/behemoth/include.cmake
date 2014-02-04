@@ -29,9 +29,13 @@ set(PLATFORM_RAM_KB 128)
 # Set the flags to select the application that may be compiled
 set(PLATFORM_HAS_SYSTICK  1)
 set(PLATFORM_HAS_SOFTTIM  1)
-set(PLATFORM_HAS_ETHERNET 1)
+# set(PLATFORM_HAS_ETHERNET 1)
 set(PLATFORM_HAS_BUTTON   1)
 set(PLATFORM_HAS_LEDS	  1)
+set(PLATFORM_HAS_GX3	  1)
+set(PLATFORM_HAS_TLC59116 1)
+set(PLATFORM_HAS_MOTORS	  1)
+set(PLATFORM_HAS_RC	  1)
 # To be useful, we have to add usb support on stm32f4xx
 # set(PLATFORM_HAS_USB      1)
 

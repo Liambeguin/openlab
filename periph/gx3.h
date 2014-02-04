@@ -20,18 +20,19 @@
 #ifndef GX3_H_
 #define GX3_H_
 
-#include "handler.h"
+#include "GX3/gx3_.h"
 #include "GX3/gx3_msg.h"
 
 #define EOS (-1)
 
-static void GX3_rx_handler(handler_arg_t arg, uint8_t c);
 
 void	GX3_init();
 int8_t	GX3_get_message_length(const uint8_t id);
 void	GX3_process_complete_message(const uint8_t id);
-void	GX3_decode_uart_rx();
+void	GX3_decode_uart_rx(void);
 void 	GX3_write_bias();
 void 	GX3_calibrate();
+void	GX3_periodical(void);
+void	GX3_send_request(uint8_t const *request, uint8_t size);
 
 #endif /* GX3_H_ */

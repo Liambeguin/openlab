@@ -34,17 +34,30 @@
 #include "exti.h"
 #include "i2c_.h"
 
-
-#define USART2_GPIO_PORT GPIO_A
-#define USART2_GPIO_TX GPIO_PIN_2
-#define USART2_GPIO_RX GPIO_PIN_3
-/* USART pins : PC10(yellow), PC11(orange) */
-
+/** GPIO Section **/
 static void gpio_drivers_setup();
+
+/** UART Section **/
+#define UART1_EXTERNAL_BAUDRATE		500000
+#define UART2_PRINT_BAUDRATE 		500000
+#define UART3_GX3_BAUDRATE 			230400
+#define UART4_EXTERNAL_BAUDRATE		500000
+#define UART5_EXTERNAL_BAUDRATE		500000
 static void uart_drivers_setup();
+
+/** TIMER Section **/
+#define TIM2_FREQUENCY	262144
 static void timer_drivers_setup();
+
+/** SPI Section **/
 static void spi_drivers_setup();
+
+/** I2C Section **/
+#define I2C1_CLOCK_MODE	I2C_CLOCK_MODE_FAST
 static void i2c_drivers_setup();
+
+
+
 
 void platform_drivers_setup()
 {
@@ -58,9 +71,14 @@ void platform_drivers_setup()
 
 static void i2c_drivers_setup(){
 
-	//I2C 2 config for LED Driver
-	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_11);
+	/** I2C_1 configuration for external purpose **/
+	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_8);
+	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_9);
+	i2c_enable(I2C_1, I2C1_CLOCK_MODE);
+
+	/** I2C_2 configuration for LED Driver **/
 	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_10);
+	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_11);
 	i2c_enable(I2C_2, I2C_CLOCK_MODE_FAST);
 }
 
@@ -91,28 +109,62 @@ static void gpio_drivers_setup()
 
 /* UART declaration */
 uart_t uart_print = UART_2;
+uart_t uart_external = UART_3;
 static void uart_drivers_setup()
 {
-    // Enable the print uart
-    gpio_set_uart_tx(GPIO_D, GPIO_PIN_5);
-    gpio_set_uart_rx(GPIO_D, GPIO_PIN_6);
-    uart_enable(uart_print, 500000);
+	// Enable external UART1
+	gpio_set_uart_tx(GPIO_B, GPIO_PIN_6);
+	gpio_set_uart_rx(GPIO_B, GPIO_PIN_7);
+	uart_enable(UART_1, UART1_EXTERNAL_BAUDRATE);
+
+	// Enable the print uart
+	gpio_set_uart_tx(GPIO_D, GPIO_PIN_5);
+	gpio_set_uart_rx(GPIO_D, GPIO_PIN_6);
+	uart_enable(uart_print, UART2_PRINT_BAUDRATE);
+
+	// GX3 UART_3 is set up in <platform>_periph.c
+
+	// Enable external UART4
+	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
+	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
+	uart_enable(UART_4, UART4_EXTERNAL_BAUDRATE);
+
+	// Enable external UART5
+	gpio_set_uart_tx(GPIO_C, GPIO_PIN_12);
+	gpio_set_uart_rx(GPIO_D, GPIO_PIN_2);
+	uart_enable(UART_5, UART5_EXTERNAL_BAUDRATE);
 }
+//print
+void usart1_isr()
+{
+    uart_handle_interrupt(UART_1);
+}
+//print
 void usart2_isr()
 {
     uart_handle_interrupt(UART_2);
 }
-
 //GX3
 void usart3_isr()
 {
     uart_handle_interrupt(UART_3);
+}
+//print
+void uart4_isr()
+{
+    uart_handle_interrupt(UART_4);
+}
+//print
+void uart5_isr()
+{
+    uart_handle_interrupt(UART_5);
 }
 
 static void timer_drivers_setup()
 {
     // Configure the General Purpose Timers
     timer_enable(TIM_1);
+
     timer_enable(TIM_2);
     timer_enable(TIM_3);
 
@@ -128,7 +180,7 @@ static void timer_drivers_setup()
 
     // Start timer 2 for soft_timer
     timer_select_internal_clock(TIM_2,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / TIM2_FREQUENCY)
                     - 1);
 
     timer_select_internal_clock(TIM_3,
@@ -138,6 +190,7 @@ static void timer_drivers_setup()
 
     // Start ALL PWM and other timers
     timer_start(TIM_1, 0xFFFF, NULL, NULL);
+
     timer_start(TIM_2, 0xFFFF, NULL, NULL);
     timer_start(TIM_3, 0xFFFF, NULL, NULL);
 }

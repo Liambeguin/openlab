@@ -63,53 +63,22 @@ void tlc59116_init(){
 	tx_buf[4] = TLC59116_LEDOUT_ALL_PWM;	// LEDOUT3
 	i2c_tx(_led_driver.i2c, _led_driver.addr, tx_buf, 5);
 
-
 	//Make LED0 blink for init
 	tlc59116_set_led_color(TLC59116_LED0, 0x0, 0x0, 0xff);
 
 	read_addr = TLC59116_REG_EFLAG1 | TLC59116_CTRL_AUTO_INC;
 	i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr, 1, rx_buf, 2);
 	if(rx_buf[0] || rx_buf[1]){
-//		if(rx_buf[0] & 0x01)
-//			log_error("error on channel 0");
-//		if(rx_buf[0] & 0x02)
-//			log_error("error on channel 1");
-//		if(rx_buf[0] & 0x04)
-//			log_error("error on channel 2");
-//		if(rx_buf[0] & 0x08)
-//			log_error("error on channel 3");
-//		if(rx_buf[0] & 0x10)
-//			log_error("error on channel 4");
-//		if(rx_buf[0] & 0x20)
-//			log_error("error on channel 5");
-//		if(rx_buf[0] & 0x40)
-//			log_error("error on channel 6");
-//		if(rx_buf[0] & 0x80)
-//			log_error("error on channel 7");
-//
-//		if(rx_buf[1] & 0x01)
-//			log_error("error on channel 8");
-//		if(rx_buf[1] & 0x02)
-//			log_error("error on channel 9");
-//		if(rx_buf[1] & 0x04)
-//			log_error("error on channel 10");
-//		if(rx_buf[1] & 0x08)
-//			log_error("error on channel 11");
-//		if(rx_buf[1] & 0x10)
-//			log_error("error on channel 12");
-//		if(rx_buf[1] & 0x20)
-//			log_error("error on channel 13");
-//		if(rx_buf[1] & 0x40)
-//			log_error("error on channel 14");
-//		if(rx_buf[1] & 0x80)
-//			log_error("error on channel 15");
 		log_error("[LED] ERROR");
 	}
 	else
 		log_info("[LED] TLC59116 OK !!");
 
-	tlc59116_set_led_color(TLC59116_LED0, 0, 0, 0);
-
+	tlc59116_set_led_color(TLC59116_LED0, 0x0, 0x0, 0x00);
+	tlc59116_set_led_color(TLC59116_LED1, 0x0, 0x0, 0x00);
+	tlc59116_set_led_color(TLC59116_LED2, 0x0, 0x0, 0x00);
+	tlc59116_set_led_color(TLC59116_LED3, 0x0, 0x0, 0x00);
+	tlc59116_set_led_color(TLC59116_LED4, 0x0, 0x0, 0x00);
 }
 
 void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){

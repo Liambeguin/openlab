@@ -49,6 +49,7 @@ void tlc59116_config(i2c_t i2c, uint8_t addr);
 void tlc59116_init();
 
 void tlc59116_get_led_color(tlc59116_led_t led);
+//void tlc59116_get_led_color(tlc59116_led_t led, tlc59116_color_t *color)
 void tlc59116_set_led_color(tlc59116_led_t led, uint8_t red, uint8_t green, uint8_t blue);
 
 #endif /* TLC59116_H_ */

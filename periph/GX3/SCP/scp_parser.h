@@ -52,7 +52,8 @@ enum {
 void SCP_reset();
 void SCP_init();
 
-inline void* SCP_get_payload();
+inline int SCP_get(void* dst, int len);
+
 
 uint8_t SCP_decode(const char data);
 uint8_t SCP_handle_completed_message();
@@ -83,5 +84,7 @@ int8_t SCP_get_message_length(const uint8_t id);
 	    @return La somme de temps passe a recevoir depuis le dernier appel de cette fonction.
  */
 inline uint32_t SCP_sum_time_receiving();
+
+int8_t get_message_length(const uint8_t id);
 
 #endif /* SCP_PARSER_H_ */

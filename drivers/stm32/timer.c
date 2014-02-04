@@ -31,6 +31,7 @@
 #include "nvic_.h"
 
 #include "printf.h"
+#include "debug.h"
 
 void timer_enable(timer_t timer)
 {
@@ -131,6 +132,15 @@ void timer_start(timer_t timer, uint16_t update_value,
                  timer_handler_t update_handler, handler_arg_t update_arg)
 {
     const _timer_t *_timer = timer;
+
+#if defined(TIM1_BASE_ADDRESS) && defined(TIM8_BASE_ADDRESS)
+    // If timer is TIM1 or TIM8, set the main output enable bit
+    if ((_timer->base_address == TIM1_BASE_ADDRESS) || (_timer->base_address
+                    == TIM8_BASE_ADDRESS))
+    {
+        *timer_get_BDTR(_timer) = TIMER_BDTR__MOE;
+    }
+#endif
 
     // Disable interrupt generation
     *timer_get_DIER_bitband(_timer, TIMER_DIER__UIE_bit) = 0;

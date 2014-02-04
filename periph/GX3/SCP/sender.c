@@ -33,6 +33,9 @@ SCP_init(){
 
 }
 
+/*
+ * make functions that take different types and return or send a uint8_t array
+ */
 
 void SCP_send(const uint8_t data) {
 	bsdsum = crc16_byte(bsdsum, data);

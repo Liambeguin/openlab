@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "gx3.h"
 #include "gx3_.h"
@@ -27,6 +28,8 @@
 
 #include "circular_buff.h"
 #include "SCP/scp_parser.h"
+#include "endianess.h"
+
 
 #define NO_DEBUG_HEADER
 #include "debug.h"
@@ -71,6 +74,8 @@ void GX3_init(uart_t uart){
 	is_accel_calibration_completed	= false;
 	accel_calibration_nb			= 0;
 
+	SCP_init();
+
 	//initializing reception circular buffer
 	rx_buffer = cb_init();
 
@@ -88,17 +93,17 @@ void GX3_rx_handler(handler_arg_t arg, uint8_t c)
 	cb_write(&rx_buffer, &c);
 }
 
-void GX3_decode_uart_rx()
+void GX3_decode_uart_rx(void)
 {
 	uint8_t data=-1;
 	cb_read(&rx_buffer, &data);
 	if(data!=-1){
+//		log_warning("0x%02x", data);
 		SCP_decode(data);
-//		log_error("0x%02x", data);
 	}
 }
 
-void GX3_send_request(uint8_t *request, uint8_t size)
+void GX3_send_request(uint8_t const *request, uint8_t size)
 {
 	uart_transfer(_gx3_uart, request, size);
 }
@@ -108,34 +113,52 @@ int8_t GX3_get_message_length(const uint8_t id)
 	// payload size only
 	if(id == GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST[0])
 	{
-		return sizeof(struct gx3_euler_angles_and_angular_rates_response);
+		return sizeof(gx3_euler_angles_and_angular_rates_response_t);
 	}
 	else if(id == GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST[0])
 	{
-		return sizeof(struct gx3_accelerations_and_angular_rates_response);
+		return sizeof(gx3_accelerations_and_angular_rates_response_t);
 	}
 	else if(!is_gyro_calibration_completed && id == GX3_CAPTURE_GYRO_BIAS[0])
 	{
-		return sizeof(struct gx3_capture_gyro_response);
+		return sizeof(gx3_capture_gyro_response_t);
 	}
 	else if(!is_accel_calibration_completed && id == GX3_WRITE_ACCEL_BIAS[0])
 	{
-		return sizeof(struct gx3_write_accel_response);
+		return sizeof(gx3_write_accel_response_t);
+	}
+	else if(!is_accel_calibration_completed && id == GX3_GET_NAME[0])
+	{
+		return sizeof(gx3_get_name_response_t);
 	}
 
 	return UNKNOWN_MESSAGE_ID;
 }
 
+void print_float(float a){
+	//bytes reversed !!
+	uint8_t* ptr=&a;
+	printf("%x ", *ptr++);
+	printf("%x ", *ptr++);
+	printf("%x ", *ptr++);
+	printf("%x \n", *ptr);
+}
+
 void GX3_process_complete_message(const uint8_t id)
 {
-	log_error("blavla");
+
 	if (id == GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST[0])
 	{
-		struct gx3_euler_angles_and_angular_rates_response r;
-		memcpy(&r, SCP_get_payload(), sizeof(struct gx3_euler_angles_and_angular_rates_response));
-		log_not_implemented("%f", r.roll);
+		gx3_euler_angles_and_angular_rates_response_t r;
+
+
+		SCP_get(&r, sizeof(gx3_euler_angles_and_angular_rates_response_t));
+
+		printf("%f\n", r.roll);\
 
 		//TODO Write ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to datastore
+
+//		printf("r.roll\t%f\n",  r.roll);
 
 //		Software killswtich
 		//TODO Write IMU_ALIVE = 1 to datastore
@@ -149,8 +172,8 @@ void GX3_process_complete_message(const uint8_t id)
 	else if (id == GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST[0])
 	{
 
-		struct gx3_accelerations_and_angular_rates_response r;
-		memcpy(&r, SCP_get_payload(), sizeof(struct gx3_accelerations_and_angular_rates_response));
+		gx3_accelerations_and_angular_rates_response_t r;
+		SCP_get(&r, sizeof(gx3_accelerations_and_angular_rates_response_t));
 
 		if(is_accel_calibration_sent)
 		{
@@ -174,8 +197,8 @@ void GX3_process_complete_message(const uint8_t id)
 	}
 	else if(id == GX3_CAPTURE_GYRO_BIAS[0])
 	{
-		struct gx3_capture_gyro_response r;
-		memcpy(&r, SCP_get_payload(), sizeof(struct gx3_capture_gyro_response));
+		gx3_capture_gyro_response_t r;
+		SCP_get(&r, sizeof(gx3_capture_gyro_response_t));
 
 		//TODO Write GYRO_BIAS_X, GYRO_BIAS_Y, GYRO_BIAS_Z to Datastore
 
@@ -185,13 +208,23 @@ void GX3_process_complete_message(const uint8_t id)
 
 	else if(id == GX3_WRITE_ACCEL_BIAS[0])
 	{
-		struct gx3_write_accel_response r;
-		memcpy(&r, SCP_get_payload(), sizeof(struct gx3_write_accel_response));
+		gx3_write_accel_response_t r;
+		SCP_get(&r, sizeof(gx3_write_accel_response_t));
 
 		//TODO Write ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to Datastore
 
 		//GX3 confirm that calibration is completed
 		is_accel_calibration_completed = true;
+	}
+	else if(id == GX3_GET_NAME[0])
+	{
+		gx3_get_name_response_t r;
+		SCP_get(&r, sizeof(gx3_get_name_response_t));
+		int i=0;
+		for(i=0; i<sizeof(r.name); i++)
+			printf("[%c]", r.name[i]);
+		printf("\n");
+
 	}
 
 }
@@ -204,13 +237,15 @@ void GX3_periodical()
 //		TODO write IMU_ALIVE = 0 to datastore
 	}
 
-	uart_transfer(_gx3_uart, GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
-			sizeof(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST));
-	uart_transfer(_gx3_uart, GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
-			sizeof(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
+	//test
+//	GX3_send_request(GX3_GET_NAME, GX3_GET_NAME_SIZE);
+	/* *** */
 
-//	log_not_implemented("%f", gx3_euler_angles_and_angular_rates_response);
+	GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
+			GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);
 
+//	GX3_send_request(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
+//			GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE);
 
 //
 //	//Monitoring
@@ -244,6 +279,7 @@ void GX3_write_bias(){
 
 void GX3_calibrate()
 {
+/*
 
 	log_info("[GX3] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ... \n\r");
 
@@ -254,7 +290,7 @@ void GX3_calibrate()
 	while(! is_gyro_calibration_completed)
 	{
 		//const uint32_t elapse = Singleton::get()->timer0.get_us_time() - start;
-		decode_uart_rx();
+		GX3_decode_uart_rx();
 		soft_timer_delay_us(100);
 		//imu_print_dbg("Wait... IMU gyro bias calibration for 10000 : " << elapse << "\n\r");
 		//log_infoln(elapse);
@@ -285,8 +321,8 @@ void GX3_calibrate()
 		{
 			is_accel_calibration_sent = true;
 
-			uart_transfer(_gx3_uart, (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
-					sizeof( (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
+//			uart_transfer(_gx3_uart, (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
+//					sizeof( (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
 		}
 
 		decode_uart_rx();
@@ -336,5 +372,5 @@ void GX3_calibrate()
 	is_accel_calibration_completed = true;
 
 	log_info("[GX3] Calibration done \n\r");
-
+/**/
 }

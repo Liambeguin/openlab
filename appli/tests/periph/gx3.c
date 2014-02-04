@@ -40,9 +40,10 @@ void gx3_periodical_task(void *arg){
 
     while (1){
     	GX3_periodical();
-    	vTaskDelay(configTICK_RATE_HZ/4);
+    	vTaskDelay(configTICK_RATE_HZ/1);
 
     }
+//    	while(1);
 }
 
 
@@ -53,7 +54,7 @@ void gx3_decode_task(void *arg){
 
     while (1){
     	GX3_decode_uart_rx();
-    	vTaskDelay(configTICK_RATE_HZ/100);
+    	vTaskDelay(configTICK_RATE_HZ/30);
 
     }
 }

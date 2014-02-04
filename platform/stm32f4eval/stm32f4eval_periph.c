@@ -48,7 +48,7 @@ void platform_periph_setup()
 {
 //	accelero_setup();
 //	motors_setup();
-	rc_setup();
+//	rc_setup();
 }
 
 static void accelero_setup(){

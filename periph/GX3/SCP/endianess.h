@@ -20,6 +20,9 @@
 #ifndef ENDIANESS_H_
 #define ENDIANESS_H_
 
+#include <stdint.h>
+#include "debug.h"
+
 
 #ifdef __AVR__
 #define LITTLE_ENDIAN
@@ -28,8 +31,6 @@
 #else
 #define LITTLE_ENDIAN
 #endif
-
-#include <stdint.h>
 
 /*! @class Endianess
     @brief Classe qui gere le endianness lors des echanges de message
@@ -41,13 +42,48 @@
 	<B> Le systeme est en BIG ENDIAN <\B>
 */
 
-inline uint32_t flip_endianess(const uint32_t x) {
-	int ret, i;
-	for(i = sizeof(uint32_t)/2; i>=0; --i) {
-		*((uint8_t *) &ret + i) = *((uint8_t *) &x + sizeof(uint32_t) - i - 1);
-		*((uint8_t *) &ret + sizeof(uint32_t) - i - 1) = *((uint8_t *) &x + i);
-	}
-	return ret;
+inline uint32_t flip_endianess(const uint32_t x); //{
+//	int ret, i;
+//	for(i = sizeof(uint32_t)/2; i>=0; --i) {
+//		*((uint8_t *) &ret + i) = *((uint8_t *) &x + sizeof(uint32_t) - i - 1);
+//		*((uint8_t *) &ret + sizeof(uint32_t) - i - 1) = *((uint8_t *) &x + i);
+//	}
+//	return ret;
+//}
+
+//inline float flip_endianess(const float x) {
+//	int ret, i;
+//	for(i = sizeof(float)/2; i>=0; --i) {
+//		*((uint8_t *) &ret + i) = *((uint8_t *) &x + sizeof(float) - i - 1);
+//		*((uint8_t *) &ret + sizeof(float) - i - 1) = *((uint8_t *) &x + i);
+//	}
+//	return ret;
+//}
+
+//! Byte swap unsigned short
+uint16_t swap_uint16( uint16_t val )
+{
+    return (val << 8) | (val >> 8 );
+}
+
+//! Byte swap short
+int16_t swap_int16( int16_t val )
+{
+    return (val << 8) | ((val >> 8) & 0xFF);
+}
+
+//! Byte swap unsigned int
+uint32_t swap_uint32( uint32_t val )
+{
+    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
+    return (val << 16) | (val >> 16);
+}
+
+//! Byte swap int
+int32_t swap_int32( int32_t val )
+{
+    val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF );
+    return (val << 16) | ((val >> 16) & 0xFFFF);
 }
 
 #if defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)

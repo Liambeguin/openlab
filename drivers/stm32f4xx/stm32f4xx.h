@@ -55,10 +55,12 @@ extern const _spi_t _spi1, _spi2, _spi3;
 #define SPI_2 (&_spi2)
 #define SPI_3 (&_spi3)
 
-extern const _uart_t _uart1, _uart2, _uart3;
+extern const _uart_t _uart1, _uart2, _uart3, _uart4, _uart5;
 #define UART_1 (&_uart1)
 #define UART_2 (&_uart2)
 #define UART_3 (&_uart3)
+#define UART_4 (&_uart4)
+#define UART_5 (&_uart5)
 
 extern const _timer_t _tim1, _tim2, _tim3, _tim4, _tim5, _tim6, _tim7, _tim8;
 #define TIM_1 (&_tim1)

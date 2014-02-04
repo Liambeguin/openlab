@@ -28,7 +28,5 @@
 #include "GX3/gx3_msg.h"
 
 void GX3_rx_handler(handler_arg_t arg, uint8_t c);
-void GX3_get_name();
-
 
 #endif /* GX3__H_ */

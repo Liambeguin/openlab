@@ -27,6 +27,7 @@
 #include "stm32f4xx.h"
 
 #include "nvic_.h"
+#include "rcc.h"
 
 /* All GPIOs */
 GPIO_INIT(_gpioA, GPIOA_BASE_ADDRESS, RCC_AHB_BIT_GPIOA);
@@ -69,6 +70,10 @@ UART_INIT(_uart2, USART2_BASE_ADDRESS, RCC_APB_BUS_USART2,
         RCC_APB_BIT_USART2, NVIC_IRQ_LINE_USART2);
 UART_INIT(_uart3, USART3_BASE_ADDRESS, RCC_APB_BUS_USART3,
         RCC_APB_BIT_USART3, NVIC_IRQ_LINE_USART3);
+UART_INIT(_uart4, UART4_BASE_ADDRESS, RCC_APB_BUS_UART4,
+        RCC_APB_BIT_UART4, NVIC_IRQ_LINE_UART4);
+UART_INIT(_uart5, UART5_BASE_ADDRESS, RCC_APB_BUS_UART5,
+        RCC_APB_BIT_UART5, NVIC_IRQ_LINE_UART5);
 
 /* DMA STREAMS */
 DMA_INIT(_dma1_str0, DMA1_BASE_ADDRESS, RCC_AHB_BIT_DMA1, 0, NVIC_IRQ_LINE_DMA1_STR0);
@@ -102,12 +107,16 @@ const gpio_t gpioI = GPIO_I;
 const i2c_t i2c1 = I2C_1;
 const i2c_t i2c2 = I2C_2;
 
+
 const spi_t spi1 = SPI_1;
 const spi_t spi2 = SPI_2;
+const spi_t spi3 = SPI_3;
 
 const uart_t uart1 = UART_1;
 const uart_t uart2 = UART_2;
 const uart_t uart3 = UART_3;
+const uart_t uart4 = UART_4;
+const uart_t uart5 = UART_5;
 
 const timer_t tim1 = TIM_1;
 const timer_t tim2 = TIM_2;

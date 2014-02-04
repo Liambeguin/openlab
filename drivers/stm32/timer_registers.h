@@ -30,6 +30,7 @@
 #include "memmap.h"
 #include "timer_.h"
 
+
 static inline volatile uint16_t *timer_get_CR1(const _timer_t *timer)
 {
     return mem_get_reg16(timer->base_address + TIMx_CR1_OFFSET);

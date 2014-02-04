@@ -55,6 +55,7 @@ static void rc_setup();
 #include "gx3.h"
 static void gx3_setup();
 #define GX3_BAUDRATE	230400
+//#define GX3_BAUDRATE	115200
 
 /** LED DRIVER setup **/
 #include "tlc59116.h"
@@ -66,8 +67,8 @@ static void led_driver_setup();
 
 void platform_periph_setup()
 {
-	motors_setup();
-	rc_setup();
+//	motors_setup();
+//	rc_setup();
 	led_driver_setup();
 	gx3_setup();
 }
@@ -113,16 +114,6 @@ static void motors_setup(){
 
 	};
 
-
-	/**
-	 * Enabling GPIOs related to the motors
-	 */
-	uint8_t i;
-	for(i=0; i<sizeof(motors)/sizeof(motors[0]); i++){
-		gpio_enable(motors[i].port);
-		gpio_set_timer_output(motors[i].port, motors[i].pin, (gpio_af_t)motors[i].alternate);
-	}
-
 	/**
 	 * Setting up LEVEL_SHIFTER
 	 */
@@ -141,6 +132,16 @@ static void motors_setup(){
 	gpio_set_output(MUX_SELECT_PORT, MUX_SELECT_PIN);
 	gpio_pin_set(MUX_SELECT_PORT, MUX_SELECT_PIN);
 	/**/
+
+	/**
+	 * Enabling GPIOs related to the motors
+	 */
+	uint8_t i;
+	for(i=0; i<sizeof(motors)/sizeof(motors[0]); i++){
+		gpio_enable(motors[i].port);
+		gpio_set_timer_output(motors[i].port, motors[i].pin, (gpio_af_t)motors[i].alternate);
+	}
+
 
 	motors_config(motors);
 	motors_idle();
