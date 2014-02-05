@@ -75,15 +75,15 @@ inline void flip_endianess(void *source, int size)
 }
 
 #if defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
-	#define host2littleendian(x, y) (x, y)
-	#define littleendian2host(x, y) (x, y)
-	#define host2bigendian(x, y) flip_endianess(x, y)
-	#define bigendian2host(x, y) flip_endianess(x, y)
+	#define host2littleendian(x) (x)
+	#define littleendian2host(x) (x)
+	#define host2bigendian(x) flip_endianess(x, sizeof(*x))
+	#define bigendian2host(x) flip_endianess(x, sizeof(*x))
 #elif !defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-	#define host2littleendian(x, y) flip_endianess(x, y)
-	#define littleendian2host(x, y) flip_endianess(x, y)
-	#define host2bigendian(x, y) (x, y)
-	#define bigendian2host(x, y) (x, y)
+	#define host2littleendian(x) flip_endianess(x, sizeof(*x))
+	#define littleendian2host(x) flip_endianess(x, sizeof(*x))
+	#define host2bigendian(x) (x)
+	#define bigendian2host(x) (x)
 #else
 	#error "Endianess not defined !"
 #endif

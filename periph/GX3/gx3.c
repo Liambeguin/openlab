@@ -30,6 +30,8 @@
 #include "SCP/scp_parser.h"
 #include "endianess.h"
 
+#include "sender.h"
+
 
 #define NO_DEBUG_HEADER
 #include "debug.h"
@@ -110,7 +112,9 @@ void GX3_send_request(uint8_t const *request, uint8_t size)
 
 
 /*
- * rewrite in other class (generic) with switch
+ * rewrite in other class (generic) with switch case
+ *
+ * is_***_alive is a hack to speed up the protocol... => can be removed
  */
 int8_t GX3_get_message_length(const uint8_t id)
 {
@@ -149,22 +153,17 @@ void GX3_process_complete_message(const uint8_t id)
 
 		SCP_get(&r, sizeof(gx3_euler_angles_and_angular_rates_response_t));
 
+		//Writing ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to "datastore"
+		bigendian2host(&(r.roll));	gx3.roll	= r.roll;
+		bigendian2host(&(r.pitch));	gx3.pitch	= r.pitch;
+		bigendian2host(&(r.yaw));	gx3.yaw 	= r.yaw;
 
-		//TODO Write ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to datastore
-//		gx3.roll	= bigendian2host(&(r.roll), sizeof(r.roll));
-//		gx3.pitch	= bigendian2host(&(r.pitch), sizeof(r.pitch));
-//		gx3.yaw 	= bigendian2host(&(r.yaw), sizeof(r.yaw));
-//
-//		gx3.dot_x = bigendian2host(&(r.dot_x), sizeof(r.dot_x));
-//		gx3.dot_y = bigendian2host(&(r.dot_y), sizeof(r.dot_y));
-//		gx3.dot_z = bigendian2host(&(r.dot_z), sizeof(r.dot_z));
-//
-//		gx3.timer = bigendian2host(&(r.timer), sizeof(r.timer));
-
-
+		bigendian2host(&(r.dot_x));	gx3.dot_roll	= r.dot_x;
+		bigendian2host(&(r.dot_y));	gx3.dot_pitch	= r.dot_y;
+		bigendian2host(&(r.dot_z));	gx3.dot_yaw		= r.dot_z;
 
 //		Software killswtich
-		//TODO Write IMU_ALIVE = 1 to datastore
+		gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
 		//Monitoring
@@ -182,14 +181,22 @@ void GX3_process_complete_message(const uint8_t id)
 		{
 			is_accel_calibration_sent = false;
 			accel_calibration_nb++;
-			//TODO write ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to datastore
+
+			// Writing ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to datastore
+			bigendian2host(&(r.accel_x));	gx3.accel_bias_x += r.accel_x;
+			bigendian2host(&(r.accel_y));	gx3.accel_bias_y += r.accel_y;
+			bigendian2host(&(r.accel_z));	gx3.accel_bias_z += r.accel_z + 1.0f ;
+
 		}else{
-			//TODO write ACCEL_X, ACCEL_Y, ACCEL_Z to datastore
+			// Writing ACCEL_X, ACCEL_Y, ACCEL_Z to datastore
+			bigendian2host(&(r.accel_x));	gx3.accel_x = r.accel_x * PHYSICS_GX3;
+			bigendian2host(&(r.accel_y));	gx3.accel_y = r.accel_y * PHYSICS_GX3;
+			bigendian2host(&(r.accel_z));	gx3.accel_z = r.accel_z * PHYSICS_GX3;
+
 		}
 
-
 //		KillSwtich
-		//TODO Write IMU_ALIVE = 1 to datastore
+		gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
 		//Monitoring
@@ -203,7 +210,10 @@ void GX3_process_complete_message(const uint8_t id)
 		gx3_capture_gyro_response_t r;
 		SCP_get(&r, sizeof(gx3_capture_gyro_response_t));
 
-		//TODO Write GYRO_BIAS_X, GYRO_BIAS_Y, GYRO_BIAS_Z to Datastore
+		// Writing GYRO_BIAS_X, GYRO_BIAS_Y, GYRO_BIAS_Z to Datastore
+		bigendian2host(&(r.gyro_bias_x));	gx3.gyro_bias_x = r.gyro_bias_x;
+		bigendian2host(&(r.gyro_bias_y));	gx3.gyro_bias_y = r.gyro_bias_y;
+		bigendian2host(&(r.gyro_bias_z));	gx3.gyro_bias_z = r.gyro_bias_z;
 
 		//GX3 confirm that calibration is completed
 		is_gyro_calibration_completed = true;
@@ -214,7 +224,10 @@ void GX3_process_complete_message(const uint8_t id)
 		gx3_write_accel_response_t r;
 		SCP_get(&r, sizeof(gx3_write_accel_response_t));
 
-		//TODO Write ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to Datastore
+		// Writing ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to Datastore
+		bigendian2host(&(r.accel_bias_x));	gx3.accel_bias_x = r.accel_bias_x;
+		bigendian2host(&(r.accel_bias_y));	gx3.accel_bias_y = r.accel_bias_y;
+		bigendian2host(&(r.accel_bias_z));	gx3.accel_bias_z = r.accel_bias_z;
 
 		//GX3 confirm that calibration is completed
 		is_accel_calibration_completed = true;
@@ -236,45 +249,42 @@ void GX3_periodical()
 {
 	if(gx3_alive_check)
 		gx3_alive_check--;
-	else{
-//		TODO write IMU_ALIVE = 0 to datastore
-	}
 
-	//test
-//	GX3_send_request(GX3_GET_NAME, GX3_GET_NAME_SIZE);
-	/* *** */
+	else
+		gx3.imu_alive = false;
 
 	GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
 			GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);
 
-//	GX3_send_request(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
-//			GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE);
+	GX3_send_request(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
+			GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE);
 
-//
-//	//Monitoring
-//	gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());
+
+	//Monitoring
+	gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());
 }
 
 
-void GX3_write_bias(){
+//commented in initial code
+void GX3_write_bias()
+{
 	/*
-	sender <<  (char) GX3_WRITE_GYRO_BIAS;
-	sender <<  (char) GX3_WRITE_GYRO_BIAS_C1;
-	sender <<  (char) GX3_WRITE_GYRO_BIAS_C2;
-	sender <<  0.0f;
-	sender <<  0.0f;
-	sender <<  0.0f;
+
+	GX3_send_request(GX3_WRITE_GYRO_BIAS, GX3_WRITE_GYRO_BIAS_SIZE);
+
+	SCP_send_float(0.0f);
+	SCP_send_float(0.0f);
+	SCP_send_float(0.0f);
+
 	is_gyro_calibration_completed  = true;
 
 
 
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS;
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C1;
-	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C2;
-	sender <<  100.0f;
-	sender <<  200.0f;
-	sender <<  17.0f;
-	*/
+	GX3_send_request(GX3_WRITE_ACCEL_BIAS, GX3_WRITE_ACCEL_BIAS_SIZE);
+	SCP_send_float(100.0f);
+	SCP_send_float(200.0f);
+	SCP_send_float(17.0f);
+*/
 
 	//is_accel_calibration_sent	   = true;
 	//is_accel_calibration_completed = true;
@@ -282,38 +292,32 @@ void GX3_write_bias(){
 
 void GX3_calibrate()
 {
-/*
 
-	log_info("[GX3] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ... \n\r");
+	log_info("[GX3] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ...");
 
 	GX3_send_request(GX3_CAPTURE_GYRO_BIAS, GX3_CAPTURE_GYRO_BIAS_SIZE);
 
+	log_debug("1");
 	const uint32_t start = soft_timer_ticks_to_us(soft_timer_time());
 
 	while(! is_gyro_calibration_completed)
 	{
 		//const uint32_t elapse = Singleton::get()->timer0.get_us_time() - start;
-		GX3_decode_uart_rx();
-		soft_timer_delay_us(100);
+//		GX3_decode_uart_rx();
+			soft_timer_delay_us(100);
 		//imu_print_dbg("Wait... IMU gyro bias calibration for 10000 : " << elapse << "\n\r");
 		//log_infoln(elapse);
 	}
+	log_debug("2");
 
-	log_info("[GX3] Gyro calibrated with : \n\r");
-	log_info("[GX3] GYRO_BIAS_X = ");
-//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_X));
-	log_info("\n\r");
+	log_info("[GX3] Gyro calibrated with :");
+	log_info("[GX3] GYRO_BIAS_X = %f", gx3.gyro_bias_x);
 
-	log_info("[GX3] GYRO_BIAS_Y = ");
-//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_Y));
-	log_info("\n\r");
+	log_info("[GX3] GYRO_BIAS_Y = %f", gx3.gyro_bias_y);
 
-	log_info("[GX3] GYRO_BIAS_Z = ");
-//	log_info(Singleton::get()->data.get(DataStore::GYRO_BIAS_Z));
-	log_info("\n\r");
+	log_info("[GX3] GYRO_BIAS_Z = %f", gx3.gyro_bias_z);
 
-
-	log_info("[GX3] Measuring acceleration for 10s ... \n\r");
+	log_info("[GX3] Measuring acceleration for 10s ...");
 
 	//Execute Accel calibration
 	const uint32_t end = (soft_timer_ticks_to_us(soft_timer_time()) + 10000000); //Run for 10s
@@ -323,12 +327,10 @@ void GX3_calibrate()
 		if(!is_accel_calibration_sent)
 		{
 			is_accel_calibration_sent = true;
-
-//			uart_transfer(_gx3_uart, (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
-//					sizeof( (char)GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST));
+			GX3_send_request(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST, GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE);
 		}
 
-		decode_uart_rx();
+		GX3_decode_uart_rx();
 		soft_timer_delay_us(100);
 	}
 
@@ -338,42 +340,33 @@ void GX3_calibrate()
 
 	if(accel_calibration_nb != 0)
 	{
-//		accel_bias_x = Singleton::get()->data.get(DataStore::ACCEL_BIAS_X) / (float)(accel_calibration_nb);
-//		accel_bias_y = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y) / (float)(accel_calibration_nb);
-//		accel_bias_z = Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z) / (float)(accel_calibration_nb);
+		accel_bias_x = gx3.accel_bias_x / (float)(accel_calibration_nb);
+		accel_bias_y = gx3.accel_bias_y / (float)(accel_calibration_nb);
+		accel_bias_z = gx3.accel_bias_z / (float)(accel_calibration_nb);
 	}
 
-//	sender <<  (char) GX3_WRITE_ACCEL_BIAS;
-//	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C1;
-//	sender <<  (char) GX3_WRITE_ACCEL_BIAS_C2;
-//	sender <<  accel_bias_x;
-//	sender <<  accel_bias_y;
-//	sender <<  accel_bias_z;
+	GX3_send_request(GX3_WRITE_ACCEL_BIAS, GX3_WRITE_ACCEL_BIAS_SIZE);
+//	SCP_send_float(accel_bias_x);
+//	SCP_send_float(accel_bias_y);
+//	SCP_send_float(accel_bias_z);
 
 	while(! is_accel_calibration_completed)
 	{
-		decode_uart_rx();
-				soft_timer_delay_us(100);
+		GX3_decode_uart_rx();
+		soft_timer_delay_us(100);
 	}
 
-	log_info("[GX3] Accel calibrated with : \n\r");
-	log_info("[GX3] ACCEL_BIAS_X = ");
-//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_X));
-	log_info("\n\r");
+	log_info("[GX3] Accel calibrated with : ");
+	log_info("[GX3] ACCEL_BIAS_X = %f", gx3.accel_bias_x);
 
-	log_info("[GX3] ACCEL_BIAS_Y = ");
-//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Y));
-	log_info("\n\r");
+	log_info("[GX3] ACCEL_BIAS_Y = %f", gx3.accel_bias_y);
 
-	log_info("[GX3] ACCEL_BIAS_Z = ");
-//	log_info(Singleton::get()->data.get(DataStore::ACCEL_BIAS_Z));
-	log_info("\n\r");
+	log_info("[GX3] ACCEL_BIAS_Z = %f", gx3.accel_bias_z);
 
 	//Finish calibration
 	is_gyro_calibration_completed  = true;
 	is_accel_calibration_sent	   = true;
 	is_accel_calibration_completed = true;
 
-	log_info("[GX3] Calibration done \n\r");
-*/
+	log_info("[GX3] Calibration done");
 }
