@@ -42,60 +42,48 @@
 	<B> Le systeme est en BIG ENDIAN <\B>
 */
 
-inline uint32_t flip_endianess(const uint32_t x); //{
-//	int ret, i;
-//	for(i = sizeof(uint32_t)/2; i>=0; --i) {
-//		*((uint8_t *) &ret + i) = *((uint8_t *) &x + sizeof(uint32_t) - i - 1);
-//		*((uint8_t *) &ret + sizeof(uint32_t) - i - 1) = *((uint8_t *) &x + i);
-//	}
-//	return ret;
-//}
-
-//inline float flip_endianess(const float x) {
-//	int ret, i;
-//	for(i = sizeof(float)/2; i>=0; --i) {
-//		*((uint8_t *) &ret + i) = *((uint8_t *) &x + sizeof(float) - i - 1);
-//		*((uint8_t *) &ret + sizeof(float) - i - 1) = *((uint8_t *) &x + i);
-//	}
-//	return ret;
-//}
-
-//! Byte swap unsigned short
-uint16_t swap_uint16( uint16_t val )
+inline void flip_endianess(void *source, int size)
 {
-    return (val << 8) | (val >> 8 );
-}
 
-//! Byte swap short
-int16_t swap_int16( int16_t val )
-{
-    return (val << 8) | ((val >> 8) & 0xFF);
-}
+    uint8_t *buffer[size];
+    *buffer = (uint8_t *)source;
 
-//! Byte swap unsigned int
-uint32_t swap_uint32( uint32_t val )
-{
-    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
-    return (val << 16) | (val >> 16);
-}
+    uint8_t temp;
 
-//! Byte swap int
-int32_t swap_int32( int32_t val )
-{
-    val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF );
-    return (val << 16) | ((val >> 16) & 0xFFFF);
+    /* if 16 bits */
+    if(size == 2)
+    {
+        temp = (*buffer)[0];
+        (*buffer)[0] = (*buffer)[1];
+        (*buffer)[1] = temp;
+        return;
+    }
+
+    /* if 32 bits */
+    if(size==4)
+    {
+    	temp  = (*buffer)[0];
+    	(*buffer)[0] = (*buffer)[3];
+    	(*buffer)[3] = temp;
+
+    	temp = (*buffer)[1];
+        (*buffer)[1] = (*buffer)[2];
+        (*buffer)[2] = temp;
+
+    	return;
+    }
 }
 
 #if defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
-	#define host2littleendian(x) (x)
-	#define littleendian2host(x) (x)
-	#define host2bigendian(x) flip_endianess(x)
-	#define bigendian2host(x) flip_endianess(x)
+	#define host2littleendian(x, y) (x, y)
+	#define littleendian2host(x, y) (x, y)
+	#define host2bigendian(x, y) flip_endianess(x, y)
+	#define bigendian2host(x, y) flip_endianess(x, y)
 #elif !defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-	#define host2littleendian(x) flip_endianess(x)
-	#define littleendian2host(x) flip_endianess(x)
-	#define host2bigendian(x) (x)
-	#define bigendian2host(x) (x)
+	#define host2littleendian(x, y) flip_endianess(x, y)
+	#define littleendian2host(x, y) flip_endianess(x, y)
+	#define host2bigendian(x, y) (x, y)
+	#define bigendian2host(x, y) (x, y)
 #else
 	#error "Endianess not defined !"
 #endif

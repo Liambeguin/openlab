@@ -108,6 +108,10 @@ void GX3_send_request(uint8_t const *request, uint8_t size)
 	uart_transfer(_gx3_uart, request, size);
 }
 
+
+/*
+ * rewrite in other class (generic) with switch
+ */
 int8_t GX3_get_message_length(const uint8_t id)
 {
 	// payload size only
@@ -135,15 +139,6 @@ int8_t GX3_get_message_length(const uint8_t id)
 	return UNKNOWN_MESSAGE_ID;
 }
 
-void print_float(float a){
-	//bytes reversed !!
-	uint8_t* ptr=&a;
-	printf("%x ", *ptr++);
-	printf("%x ", *ptr++);
-	printf("%x ", *ptr++);
-	printf("%x \n", *ptr);
-}
-
 void GX3_process_complete_message(const uint8_t id)
 {
 
@@ -154,11 +149,19 @@ void GX3_process_complete_message(const uint8_t id)
 
 		SCP_get(&r, sizeof(gx3_euler_angles_and_angular_rates_response_t));
 
-		printf("%f\n", r.roll);\
 
 		//TODO Write ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to datastore
+//		gx3.roll	= bigendian2host(&(r.roll), sizeof(r.roll));
+//		gx3.pitch	= bigendian2host(&(r.pitch), sizeof(r.pitch));
+//		gx3.yaw 	= bigendian2host(&(r.yaw), sizeof(r.yaw));
+//
+//		gx3.dot_x = bigendian2host(&(r.dot_x), sizeof(r.dot_x));
+//		gx3.dot_y = bigendian2host(&(r.dot_y), sizeof(r.dot_y));
+//		gx3.dot_z = bigendian2host(&(r.dot_z), sizeof(r.dot_z));
+//
+//		gx3.timer = bigendian2host(&(r.timer), sizeof(r.timer));
 
-//		printf("r.roll\t%f\n",  r.roll);
+
 
 //		Software killswtich
 		//TODO Write IMU_ALIVE = 1 to datastore
@@ -372,5 +375,5 @@ void GX3_calibrate()
 	is_accel_calibration_completed = true;
 
 	log_info("[GX3] Calibration done \n\r");
-/**/
+*/
 }

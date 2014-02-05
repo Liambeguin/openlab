@@ -48,7 +48,9 @@ void SCP_send_n(uint8_t nb, const uint8_t * data) {
 }
 
 void SCP_send_32(const uint32_t data0) {
-	const uint32_t data = host2bigendian(data0);
+
+	const uint32_t data = data0;
+	host2bigendian(&data, sizeof(data));
 	uint8_t * pdata = (uint8_t *) &data;
 	SCP_send(*pdata++);
 	SCP_send(*pdata++);
@@ -57,7 +59,8 @@ void SCP_send_32(const uint32_t data0) {
 }
 
 void SCP_send_16(const uint16_t data0) {
-	const uint16_t data = host2bigendian(data0);
+	const uint16_t data = data0;
+	host2bigendian(&data, sizeof(data));
 	uint8_t * pdata = (uint8_t *) &data;
 	SCP_send(*pdata++);
 	SCP_send(*pdata);
@@ -75,7 +78,8 @@ void SCP_send_Bytes(const uint8_t * data) {
 }
 
 void SCP_send_float(const float data0) {
-	const float data = host2bigendian(data0);
+	const float data = data0;
+	host2bigendian(&data, sizeof(data));
 	uint8_t * pdata = (uint8_t*) &data;
 	SCP_send(*pdata++);
 	SCP_send(*pdata++);

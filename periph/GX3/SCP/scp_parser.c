@@ -18,7 +18,6 @@
  */
 
 
-#include <string.h> // memcpy
 #include "./scp_parser.h"
 #include "../../gx3.h"
 #include "util.h"
@@ -26,10 +25,10 @@
 #include "debug.h"
 
 
-#define DEBUG_FLAG_DRIVER_SCP_PARSER 1
+//#define DEBUG_FLAG_DRIVER_SCP_PARSER
 //#define PRINT_AFTER_CHKSUM
 
-#if DEBUG_FLAG_DRIVER_SCP_PARSER
+#ifdef DEBUG_FLAG_DRIVER_SCP_PARSER
 #define scp_print_dbg(x...)   log_debug(x)
 #define UNUSED
 #else
@@ -61,23 +60,9 @@ void SCP_reset(){
 	bytes_to_read 	= 0;
 }
 
-uint8_t test[] =
-{
-		0xCF,
-		0x00, 0x00, 0x80, 0x40,	// roll
-		0x00, 0x00, 0x80, 0x40,	// pitch
-		0x00, 0x00, 0x80, 0x40,	// yaw
-		0x00, 0x00, 0x80, 0x40, // dot_x
-		0x00, 0x00, 0x80, 0x40, // dot_y
-		0x00, 0x00, 0x80, 0x40, // dot_z
-		0x00, 0x00, 0x00, 0x0A	// timer
-};
-
-
 
 inline int SCP_get(void* dst, int len) {
-//	memcpy(dst, buff + 1, len);
-	memcpy(dst, test+1, len);
+	memcpy(dst, buff + 1, len);
 	return len;
 }
 
@@ -98,8 +83,6 @@ uint8_t SCP_decode(const char c) {
 				state = RECEIVING_KNOWN_MESSAGE;
 				buff[buff_count++] = c;
 			} else {
-//				log_error("Invalid id : 0x%02x ", id);
-
 				// unknown message, nothing left to do
 				return SCPPARSER_ERROR;
 			}
@@ -115,12 +98,10 @@ uint8_t SCP_decode(const char c) {
 	return SCP_handle_completed_message();
 }
 
-//TODO error on chksum in this function
 uint8_t SCP_handle_completed_message() {
 	uint8_t ret = SCPPARSER_OK;
 
-
-//	scp_print_dbg("st: %d  bc: %d btr: %d\n",  state, buff_count, bytes_to_read);
+	scp_print_dbg("st: %d  bc: %d btr: %d\n",  state, buff_count, bytes_to_read);
 
 	if (state == RECEIVING_KNOWN_MESSAGE && buff_count >= bytes_to_read) {
 		// a complete message is ready to be validated.
