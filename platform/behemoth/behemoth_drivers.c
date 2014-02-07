@@ -84,7 +84,7 @@ static void i2c_drivers_setup(){
 
 static void spi_drivers_setup()
 {
-	//TODO
+	//TODO some day
 	//SPI3 config Memory
 //	gpio_set_spi_clk(GPIO_B, GPIO_PIN_3);
 //	gpio_set_spi_miso(GPIO_B, GPIO_PIN_4);
@@ -109,7 +109,6 @@ static void gpio_drivers_setup()
 
 /* UART declaration */
 uart_t uart_print = UART_2;
-uart_t uart_external = UART_3;
 static void uart_drivers_setup()
 {
 	// Enable external UART1
@@ -162,58 +161,35 @@ void uart5_isr()
 
 static void timer_drivers_setup()
 {
-    // Configure the General Purpose Timers
+    // Enable them all!
     timer_enable(TIM_1);
-
     timer_enable(TIM_2);
-    timer_enable(TIM_3);
 
-    // Select the clocks for all timers
-    timer_select_internal_clock(TIM_1, 0);
-    timer_select_internal_clock(TIM_2, 0);
-    timer_select_internal_clock(TIM_3, 0);
-
-    //start timer 4 for motor control
+    //
     timer_select_internal_clock(TIM_1,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
                     - 1);
 
-    // Start timer 2 for soft_timer
     timer_select_internal_clock(TIM_2,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / TIM2_FREQUENCY)
-                    - 1);
-
-    timer_select_internal_clock(TIM_3,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
 
+    // Start ALL timers
+    timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
+    timer_start(TIM_2, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
 
-    // Start ALL PWM and other timers
-    timer_start(TIM_1, 0xFFFF, NULL, NULL);
-
-    timer_start(TIM_2, 0xFFFF, NULL, NULL);
-    timer_start(TIM_3, 0xFFFF, NULL, NULL);
+    timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
 }
 
-/* Timer 1 interrupt Service Registers */
-void tim1_brk_tim9_isr()
-{
-    timer_handle_interrupt(TIM_1);
-}
 void tim1_up_tim10_isr()
 {
     timer_handle_interrupt(TIM_1);
 }
-void tim1_trg_com_tim11_isr()
-{
-    timer_handle_interrupt(TIM_1);
-}
+
 void tim1_cc_isr()
 {
     timer_handle_interrupt(TIM_1);
 }
-/*   ***   */
-
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);
@@ -227,6 +203,30 @@ void tim4_isr()
     timer_handle_interrupt(TIM_4);
 }
 
+void tim8_up_tim13_isr()
+{
+    timer_handle_interrupt(TIM_8);
+//    timer_handle_interrupt(TIM_13);
+}
+void tim8_trg_com_tim14_isr()
+{
+//    timer_handle_interrupt(TIM_14);
+}
+void tim8_cc_isr()
+{
+    timer_handle_interrupt(TIM_8);
+}
+void tim6_dac_isr()
+{
+    timer_handle_interrupt(TIM_6);
+}
+void tim7_isr()
+{
+    timer_handle_interrupt(TIM_7);
+}
+
+
+/** External interrupts for RC receiver**/
 void exti0_isr()
 {
     exti_handle_interrupt(EXTI_LINE_Px0);
@@ -255,6 +255,10 @@ void exti15_10_isr()
 {
     exti_handle_15_10_interrupt();
 }
+
+
+
+
 void i2c2_ev_isr()
 {
     i2c_handle_ev_interrupt(I2C_2);

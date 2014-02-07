@@ -69,6 +69,12 @@ typedef enum
     TIMER_CHANNEL_4 = 3
 } timer_channel_t;
 
+typedef enum
+{
+    TIMER_MODE_CLOCK = 0,
+    TIMER_MODE_ENCODER = 1,
+} timer_mode_t;
+
 /**
  * Enable a Timer.
  *
@@ -122,9 +128,12 @@ void timer_select_external_clock(timer_t timer, uint16_t prescaler);
  * e.g. to have a 65536 ticks loop, use a 65535 update value.
  * \param update_handler a handler function to be called on each timer loop.
  * \param update_arg the argument to be provided to the handler function.
+ * \param mode the timer mode.
  */
 void timer_start(timer_t timer, uint16_t update_value,
-                 timer_handler_t update_handler, handler_arg_t update_arg);
+                 timer_handler_t update_handler, handler_arg_t update_arg,
+        timer_mode_t mode);
+
 /**
  * Stop the timer.
  *
@@ -192,9 +201,17 @@ void timer_set_channel_compare(timer_t timer, timer_channel_t channel,
  * \param channel the channel number to use.
  * \param value the new value to set as the compare value of this channel.
  */
-void
-timer_update_channel_compare(timer_t timer, timer_channel_t channel,
+void timer_update_channel_compare(timer_t timer, timer_channel_t channel,
                              uint16_t value);
+
+/**
+ * Get the timer channel capture/compare value
+ *
+ * \param timer the timer.
+ * \param channel the channel number.
+ * \return the value in the register
+ */
+uint16_t timer_get_channel_value(timer_t timer, timer_channel_t channel);
 
 typedef enum
 {
@@ -258,6 +275,11 @@ void timer_set_channel_capture(timer_t timer, timer_channel_t channel,
  * \return 1 if the update flag is set, 0 if it is not
  */
 uint32_t timer_get_update_flag(timer_t timer);
+
+/**
+ * Set the priority of a timer ISR
+ */
+void timer_set_isr_priority(timer_t timer, uint8_t priority);
 
 /**
  * @}

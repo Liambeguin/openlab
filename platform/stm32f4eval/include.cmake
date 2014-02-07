@@ -32,6 +32,7 @@ set(PLATFORM_HAS_SOFTTIM  1)
 set(PLATFORM_HAS_ETHERNET 1)
 set(PLATFORM_HAS_BUTTON   1)
 set(PLATFORM_HAS_LEDS	  1)
+set(PLATFORM_HAS_MOTORS	  1)
 set(PLATFORM_HAS_LIS302DL 1)
 # To be useful, we have to add usb support on stm32f4xx
 # set(PLATFORM_HAS_USB      1)

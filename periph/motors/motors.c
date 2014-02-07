@@ -70,7 +70,7 @@ void motors_config(motor_t *motors){
 	 *  ALL MOTORS SHOULD BE ON SAME TIMER
 	 *  Starting timer at the frequency set in <platform>_drivers.c
 	 **************************/
-	timer_start(motors[0].timer, timer_arr, NULL, NULL);
+	timer_start(motors[0].timer, timer_arr, NULL, NULL, TIMER_MODE_CLOCK);
 
 	for(i=0; i<sizeof(_motors)/sizeof(_motors[0]); i++){
 		timer_set_channel_compare(motors[i].timer, motors[i].channel, 0, NULL, NULL);

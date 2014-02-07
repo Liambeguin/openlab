@@ -292,7 +292,7 @@ void GX3_write_bias()
 
 void GX3_calibrate()
 {
-
+/*
 	log_info("[GX3] Gyro and Accel bias calibration ... Please don't move the drone for the next 20s ...");
 
 	GX3_send_request(GX3_CAPTURE_GYRO_BIAS, GX3_CAPTURE_GYRO_BIAS_SIZE);
@@ -369,4 +369,6 @@ void GX3_calibrate()
 	is_accel_calibration_completed = true;
 
 	log_info("[GX3] Calibration done");
+
+*/
 }

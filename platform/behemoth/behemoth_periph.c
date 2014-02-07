@@ -67,8 +67,8 @@ static void led_driver_setup();
 
 void platform_periph_setup()
 {
-//	motors_setup();
-//	rc_setup();
+	motors_setup();
+	rc_setup();
 	led_driver_setup();
 	gx3_setup();
 }
@@ -121,12 +121,13 @@ static void motors_setup(){
 	gpio_set_output(LEVELSHIFTER_EN_PORT, LEVELSHIFTER_EN_PIN);
 	gpio_pin_set(LEVELSHIFTER_EN_PORT, LEVELSHIFTER_EN_PIN);
 
+
 	/**
 	 * Setting up MUX
 	 */
 	gpio_enable(MUX_ENABLE_PORT);
 	gpio_set_output(MUX_ENABLE_PORT, MUX_ENABLE_PIN);
-	gpio_pin_set(MUX_ENABLE_PORT, MUX_ENABLE_PIN);
+	gpio_pin_clear(MUX_ENABLE_PORT, MUX_ENABLE_PIN);
 
 	gpio_enable(MUX_SELECT_PORT);
 	gpio_set_output(MUX_SELECT_PORT, MUX_SELECT_PIN);
@@ -141,7 +142,6 @@ static void motors_setup(){
 		gpio_enable(motors[i].port);
 		gpio_set_timer_output(motors[i].port, motors[i].pin, (gpio_af_t)motors[i].alternate);
 	}
-
 
 	motors_config(motors);
 	motors_idle();

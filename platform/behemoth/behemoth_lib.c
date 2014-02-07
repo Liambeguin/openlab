@@ -25,7 +25,7 @@ void platform_lib_setup()
 {
     // Setup the software timer
     soft_timer_config(TIM_2, TIMER_CHANNEL_1);
-    timer_start(TIM_2, 0xFFFF, soft_timer_update, NULL);
+    timer_start(TIM_2, 0xFFFF, soft_timer_update, NULL, TIMER_MODE_CLOCK);
 
     // Setup the event library
     event_init();

@@ -131,108 +131,59 @@ void usart3_isr()
     uart_handle_interrupt(UART_3);
 }
 
-//TODO remove following function
-timer_handler_t tim_test(handler_arg_t arg, uint16_t timer_value){
-	log_warning("in");
+static void isr_1(handler_arg_t arg, uint16_t c)
+{
+    printf("ISR TIM1 %u\n", (int) arg);
 }
 
-
 //2^(20) ~~> 1Mhz if used in timer_select_internal_clock()
+
 static void timer_drivers_setup()
 {
-    // Configure the General Purpose Timers
-//	timer_enable(TIM_1);
-
-	//TIM_2 used for soft timer in <platform>_lib.c
+    // Enable them all!
+    timer_enable(TIM_1);
     timer_enable(TIM_2);
 
-    timer_enable(TIM_3);
     timer_enable(TIM_4);
 
-    // Select the clocks for all timers
-//    timer_select_internal_clock(TIM_1, 0);
-    timer_select_internal_clock(TIM_2, 0);
-    timer_select_internal_clock(TIM_3, 0);
-    timer_select_internal_clock(TIM_4, 0);
-
-//    timer_select_internal_clock(TIM_1,
-//    		(rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
-//    		- 1);
-
-    // Start timer 2 for soft_timer
-    timer_select_internal_clock(TIM_2,
+    timer_select_internal_clock(TIM_1,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
                     - 1);
 
-    timer_select_internal_clock(TIM_3,
+    timer_select_internal_clock(TIM_2,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
 
-    //start timer 4 for motor control
     timer_select_internal_clock(TIM_4,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
                     - 1);
 
-    // Start ALL PWM and other timers
-//    timer_start(TIM_1, 0xFFFF, NULL, NULL);
-    timer_start(TIM_2, 0xFFFF, NULL, NULL);
-    timer_start(TIM_3, 0xFFFF, NULL, NULL);
-    timer_start(TIM_4, 0xFFFF, NULL, NULL);
+    // Start ALL timers
+    timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
+    timer_start(TIM_2, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
 
-#define TEST_TIM_1
+    timer_start(TIM_4, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
 
-#ifdef TEST_TIM_1
-    /** TIM_1 PWM test config **/
+    timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
+    timer_set_channel_compare(TIM_4, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
 
-    timer_enable(TIM_1);
-//    timer_select_internal_clock(TIM_1, 0);
-    timer_select_internal_clock(TIM_1, (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32786)-1);
-    timer_start(TIM_1, 0xFFFF, tim_test, NULL);
-    log_debug("tim_1 freq : %d", timer_get_frequency(TIM_1));
-
-
-//    gpio_set_timer_output(GPIO_E, GPIO_PIN_9, GPIO_AF_1);
-//    timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
-//    timer_activate_channel_output(TIM_1, TIMER_CHANNEL_1, TIMER_OUTPUT_MODE_PWM2);
-
-#else
-    log_not_implemented("no test on tim1");
-#endif
-#ifdef TEST_TIM_8
-
-    timer_enable(TIM_8);
-    timer_select_internal_clock(TIM_8, 0);
-    timer_select_internal_clock(TIM_8, (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32786)-1);
-    timer_start(TIM_8, 0xFFFF, tim_test, NULL);
-    log_debug("tim_8 freq : %d", timer_get_frequency(TIM_8));
-
-    //TODO pwm output
-#else
-    log_not_implemented("no test on tim8");
-#endif
-
+//    gpio_enable(GPIO_B);
+//    	gpio_set_timer_output(GPIO_B, GPIO_PIN_6, GPIO_AF_2);
+//    	timer_activate_channel_output(TIM_4, TIMER_CHANNEL_1, TIMER_OUTPUT_MODE_PWM1);
+//
+//    gpio_enable(GPIO_E);
+//	gpio_set_timer_output(GPIO_E, GPIO_PIN_9, GPIO_AF_1);
+//	timer_activate_channel_output(TIM_1, TIMER_CHANNEL_1, TIMER_OUTPUT_MODE_PWM2);
 }
 
-
-
-
-//void tim1_brk_tim9_isr()
-//{
-//    timer_handle_interrupt(TIM_1);
-//}
-//void tim1_up_tim10_isr()
-//{
-//    timer_handle_interrupt(TIM_1);
-//}
-//void tim1_trg_com_tim11_isr()
-//{
-//    timer_handle_interrupt(TIM_1);
-//}
-//void tim1_cc_isr()
-//{
-//    timer_handle_interrupt(TIM_1);
-//}
-
+void tim1_up_tim10_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
+void tim1_cc_isr()
+{
+    timer_handle_interrupt(TIM_1);
+}
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);
