@@ -55,12 +55,10 @@ static void rc_setup();
 #include "gx3.h"
 static void gx3_setup();
 #define GX3_BAUDRATE	230400
-//#define GX3_BAUDRATE	115200
 
 /** LED DRIVER setup **/
 #include "tlc59116.h"
 static void led_driver_setup();
-//#define LED_DRIVER_ADDRESS 0x68
 // All Call Address
 #define LED_DRIVER_ADDRESS 0xD0
 

@@ -137,12 +137,43 @@ void rc_config_channel(channel_t *channels){
 			nvic_enable_interrupt_line(nvic_line);
 		}
 	}
+
+	log_debug("[RC] span : %d", 0);
+	log_debug("[RC] config OK !");
 }
 
+
+/** DEBUG method **/
 void rc_print_channel_values(){
 	uint32_t i;
 	for(i=0; i<6; i++){
 		printf("CH%d:%d\t", i+1, _channel[i].value);
 	}
 	printf("\n");
+}
+
+
+//TODO convert on  [0; 1] scale
+float get_power(uint32_t channel_value){
+	return 0.0f;
+}
+//TODO convert on [-1; 1] scale
+float get_rad  (uint32_t channel_value){
+	return 0.0f;
+}
+
+void rc_periodical(){
+
+	radioController.throttle 	= ( get_power(_channel[0].value) *RC_FACTOR_THRUST) - 0.15f;
+
+	radioController.isAlive		= true;
+
+	radioController.roll 		= get_rad(_channel[1].value) * RC_FACTOR_ROLLPITCH;
+	radioController.pitch 		= get_rad(_channel[2].value) * RC_FACTOR_ROLLPITCH;
+	radioController.yaw 		= get_rad(_channel[3].value) * RC_FACTOR_YAW;
+
+
+	radioController.kill_switch 	= (get_power(_channel[4].value)>0.5f)? true:false ;
+	radioController.manual_switch 	= (get_power(_channel[5].value)>0.5f)? true:false ;
+
 }

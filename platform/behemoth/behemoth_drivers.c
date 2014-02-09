@@ -82,6 +82,27 @@ static void i2c_drivers_setup(){
 	i2c_enable(I2C_2, I2C_CLOCK_MODE_FAST);
 }
 
+void i2c1_ev_isr()
+{
+    i2c_handle_ev_interrupt(I2C_1);
+}
+
+void i2c1_er_isr()
+{
+    i2c_handle_er_interrupt(I2C_1);
+}
+void i2c2_ev_isr()
+{
+    i2c_handle_ev_interrupt(I2C_2);
+}
+
+void i2c2_er_isr()
+{
+    i2c_handle_er_interrupt(I2C_2);
+}
+
+
+
 static void spi_drivers_setup()
 {
 	//TODO some day
@@ -148,12 +169,12 @@ void usart3_isr()
 {
     uart_handle_interrupt(UART_3);
 }
-//print
+//EXT1
 void uart4_isr()
 {
     uart_handle_interrupt(UART_4);
 }
-//print
+//EXT2
 void uart5_isr()
 {
     uart_handle_interrupt(UART_5);
@@ -161,15 +182,19 @@ void uart5_isr()
 
 static void timer_drivers_setup()
 {
-    // Enable them all!
+    // Enable Motor timer
     timer_enable(TIM_1);
+
+    // Enable Soft timer
     timer_enable(TIM_2);
 
-    //
+
+    // Setting Motor timer to about 2MHz (2^21) = 2097152
     timer_select_internal_clock(TIM_1,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 262500)
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
                     - 1);
 
+    // Setting Soft timer to about 2MHz
     timer_select_internal_clock(TIM_2,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
                     - 1);
@@ -193,36 +218,6 @@ void tim1_cc_isr()
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);
-}
-void tim3_isr()
-{
-    timer_handle_interrupt(TIM_3);
-}
-void tim4_isr()
-{
-    timer_handle_interrupt(TIM_4);
-}
-
-void tim8_up_tim13_isr()
-{
-    timer_handle_interrupt(TIM_8);
-//    timer_handle_interrupt(TIM_13);
-}
-void tim8_trg_com_tim14_isr()
-{
-//    timer_handle_interrupt(TIM_14);
-}
-void tim8_cc_isr()
-{
-    timer_handle_interrupt(TIM_8);
-}
-void tim6_dac_isr()
-{
-    timer_handle_interrupt(TIM_6);
-}
-void tim7_isr()
-{
-    timer_handle_interrupt(TIM_7);
 }
 
 
@@ -256,15 +251,3 @@ void exti15_10_isr()
     exti_handle_15_10_interrupt();
 }
 
-
-
-
-void i2c2_ev_isr()
-{
-    i2c_handle_ev_interrupt(I2C_2);
-}
-
-void i2c2_er_isr()
-{
-    i2c_handle_er_interrupt(I2C_2);
-}
