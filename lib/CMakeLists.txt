@@ -54,3 +54,17 @@ endif(${PLATFORM_HAS_SD})
 
 add_library(packet STATIC packet/packet packet/packet_storage)
 target_link_libraries(packet freertos)
+
+
+
+
+###### Beginning of Dronolab
+
+# attitudeController 
+add_library(att_ctrl STATIC 
+								attitudeController/attitudeController.c 
+								attitudeController/roll/roll.c 
+								attitudeController/pitch/pitch.c 
+								attitudeController/yaw/yaw.c )
+								
+include_directories(differential attitudeController attitudeController/roll attitudeController/pitch attitudeController/yaw)

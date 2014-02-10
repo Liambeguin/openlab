@@ -51,6 +51,12 @@ void rc_config_channel(channel_t *channels){
 	exti_line_t exti_line;
 	nvic_irq_line_t nvic_line;
 
+
+	drone_radioController.RC_FACTOR_THRUST		= 1.25f; //
+	drone_radioController.RC_FACTOR_ROLLPITCH	= 0.52f; // 30 degrés
+	drone_radioController.RC_FACTOR_YAW 		= 3;     //
+
+
 	uint32_t i;
 	for(i=0; i<sizeof(_channel)/sizeof(_channel[0]); i++){
 
@@ -164,16 +170,16 @@ float get_rad  (uint32_t channel_value){
 
 void rc_periodical(){
 
-	radioController.throttle 	= ( get_power(_channel[0].value) *RC_FACTOR_THRUST) - 0.15f;
+	drone_radioController.throttle 	= ( get_power(_channel[0].value) *drone_radioController.RC_FACTOR_THRUST) - 0.15f;
 
-	radioController.isAlive		= true;
+	drone_radioController.isAlive		= true;
 
-	radioController.roll 		= get_rad(_channel[1].value) * RC_FACTOR_ROLLPITCH;
-	radioController.pitch 		= get_rad(_channel[2].value) * RC_FACTOR_ROLLPITCH;
-	radioController.yaw 		= get_rad(_channel[3].value) * RC_FACTOR_YAW;
+	drone_radioController.roll 		= get_rad(_channel[1].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
+	drone_radioController.pitch 		= get_rad(_channel[2].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
+	drone_radioController.yaw 		= get_rad(_channel[3].value) * drone_radioController.RC_FACTOR_YAW;
 
 
-	radioController.kill_switch 	= (get_power(_channel[4].value)>0.5f)? true:false ;
-	radioController.manual_switch 	= (get_power(_channel[5].value)>0.5f)? true:false ;
+	drone_radioController.kill_switch 	= (get_power(_channel[4].value)>0.5f)? true:false ;
+	drone_radioController.manual_switch 	= (get_power(_channel[5].value)>0.5f)? true:false ;
 
 }

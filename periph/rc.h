@@ -27,10 +27,6 @@
 #include "stm32f4xx/syscfg.h"
 
 
-#define RC_FACTOR_THRUST	1.25f //
-#define RC_FACTOR_ROLLPITCH	0.52f // 30 degrés
-#define RC_FACTOR_YAW		3     //
-
 
 typedef struct {
 	gpio_t 			port;
@@ -44,19 +40,28 @@ typedef struct {
 
 typedef struct {
 
-	uint32_t throttle;
+	struct{
+		float RC_FACTOR_THRUST;
+		float RC_FACTOR_ROLLPITCH;
+		float RC_FACTOR_YAW;
+	};
 
-	uint32_t roll;
-	uint32_t pitch;
-	uint32_t yaw;
+	struct{
+		uint32_t throttle;
 
-	bool kill_switch;
-	bool manual_switch;
+		uint32_t roll;
+		uint32_t pitch;
+		uint32_t yaw;
 
-	bool isAlive;
+		bool kill_switch;
+		bool manual_switch;
+
+		bool isAlive;
+	};
+
 }rc_t;
 
-rc_t radioController;
+rc_t drone_radioController;
 
 void rc_config_channel(channel_t *channels);
 void rc_print_channel_values();

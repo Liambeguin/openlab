@@ -80,7 +80,7 @@ static void led_driver_setup(){
 
 static void motors_setup(){
 
-	motor_t motors[] = {
+	_motor_t motors[] = {
 			{
 					.timer 		= TIM_1,
 					.channel	= TIMER_CHANNEL_1,

@@ -35,7 +35,7 @@ target_link_libraries(platform
 	printf
 	event
 	softtimer
-	scp
+	att_ctrl
 
 # Periph 
 	lis302dl

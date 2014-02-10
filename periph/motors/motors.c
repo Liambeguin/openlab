@@ -28,6 +28,7 @@
 
 #include <math.h>
 
+
 #include "platform.h"
 #include "motors.h"
 
@@ -38,14 +39,31 @@
 #include "timer.h"
 
 //Global declaration corresponding to the drone's motors
-static motor_t _motors[4];
+static _motor_t _motors[4];
 
 uint16_t _value_0, _value_100, _span;
 
 
-void motors_config(motor_t *motors){
+void motors_config(_motor_t *motors){
 
 	log_info("[MOTORS] initializing motors ...");
+
+
+	/** Setting up constants linked to the motors **/
+	drone_motors.MOTOR_SPEED_MAX	= 750.00f;
+	drone_motors.IDLE_POURC_ESC		=   0.06f;
+
+	drone_motors.PHYSICS_B	= 0.00001418713138124377f;
+	drone_motors.PHYSICS_D	= 0.00000184f;
+
+	drone_motors.U1_MAX	 	= (4.0f * drone_motors.MOTOR_SPEED_MAX * drone_motors.MOTOR_SPEED_MAX * drone_motors.PHYSICS_B);
+	drone_motors.BIAS_U2	= 0.0f;
+	drone_motors.BIAS_U3	= 0.0f;
+	drone_motors.BIAS_U4	= 0.0f;
+	drone_motors.BIAS_ROLL	= 0.0f;
+	drone_motors.BIAS_PITCH	= 0.0f;
+	/** 			*** 						**/
+
 	uint16_t timer_arr;
 
 	uint8_t i;
@@ -79,14 +97,14 @@ void motors_config(motor_t *motors){
 	log_info("[MOTORS] initialized !!");
 }
 
-void ppm_update(motor_t motor, float ratio){
+void ppm_update(_motor_t motor, float ratio){
 
-		if (ratio < 0.0f || ratio > 1.0f){
-			log_error("PPM Value out of range");
-			return;
-		}
+	if (ratio < 0.0f || ratio > 1.0f){
+		log_error("PPM Value out of range");
+		return;
+	}
 
-		timer_update_channel_compare(motor.timer, motor.channel, (uint16_t)((float)_span * ratio + (float)_value_0));
+	timer_update_channel_compare(motor.timer, motor.channel, (uint16_t)((float)_span * ratio + (float)_value_0));
 }
 
 
@@ -109,48 +127,43 @@ void motors_ratio(float ratio_0, float ratio_1, float ratio_2, float ratio_3){
  */
 float motors_rad_to_percent(float v) {
 
-        if(v > MOTOR_SPEED_MAX)
-                return 0.85f; //This is the maximum ...
-        else if(v <= 0)
-                return 0.0f;
-        else
-                return  0.01 * ( 0.00011424106 * (v*v) + 0.02670861842 * v ); // equation return in %
+	if(v > drone_motors.MOTOR_SPEED_MAX)
+		return 0.85f; //This is the maximum ...
+	else if(v <= 0)
+		return 0.0f;
+	else
+		return  0.01 * ( 0.00011424106 * (v*v) + 0.02670861842 * v ); // equation return in %
 }
 
 void motors_speeds(const float M0, const float M1, const float M2, const float M3){
 
-        //Register motor speed in rad/s
-//        Singleton::get()->data.set(DataStore::M1, M1);
-//        Singleton::get()->data.set(DataStore::M2, M2);
-//        Singleton::get()->data.set(DataStore::M3, M3);
-//        Singleton::get()->data.set(DataStore::M4, M4);
-
-		motors_datastore.M0 = M0;
-		motors_datastore.M1 = M1;
-		motors_datastore.M2 = M2;
-		motors_datastore.M3 = M3;
+	//Register motor speed in rad/s
+	drone_motors.M0 = M0;
+	drone_motors.M1 = M1;
+	drone_motors.M2 = M2;
+	drone_motors.M3 = M3;
 
 
-        //Transform in ppm duty, if speed is to low, idle motor !!!!
-        const float V0 = ( M0 > 5 ? motors_rad_to_percent(M0) : IDLE_POURC_ESC);
-        const float V1 = ( M1 > 5 ? motors_rad_to_percent(M1) : IDLE_POURC_ESC);
-        const float V2 = ( M2 > 5 ? motors_rad_to_percent(M2) : IDLE_POURC_ESC);
-        const float V3 = ( M3 > 5 ? motors_rad_to_percent(M3) : IDLE_POURC_ESC);
+	//Transform in ppm duty, if speed is to low, idle motor !!!!
+	const float V0 = ( M0 > 5 ? motors_rad_to_percent(M0) : drone_motors.IDLE_POURC_ESC);
+	const float V1 = ( M1 > 5 ? motors_rad_to_percent(M1) : drone_motors.IDLE_POURC_ESC);
+	const float V2 = ( M2 > 5 ? motors_rad_to_percent(M2) : drone_motors.IDLE_POURC_ESC);
+	const float V3 = ( M3 > 5 ? motors_rad_to_percent(M3) : drone_motors.IDLE_POURC_ESC);
 
 
-        ppm_update(_motors[0], V0);
-        ppm_update(_motors[1], V1);
-        ppm_update(_motors[2], V2);
-        ppm_update(_motors[3], V3);
+	ppm_update(_motors[0], V0);
+	ppm_update(_motors[1], V1);
+	ppm_update(_motors[2], V2);
+	ppm_update(_motors[3], V3);
 
 }
 
 void motors_idle(){
 
-        ppm_update(_motors[0], IDLE_POURC_ESC);
-        ppm_update(_motors[1], IDLE_POURC_ESC);
-        ppm_update(_motors[2], IDLE_POURC_ESC);
-        ppm_update(_motors[3], IDLE_POURC_ESC);
+	ppm_update(_motors[0], drone_motors.IDLE_POURC_ESC);
+	ppm_update(_motors[1], drone_motors.IDLE_POURC_ESC);
+	ppm_update(_motors[2], drone_motors.IDLE_POURC_ESC);
+	ppm_update(_motors[3], drone_motors.IDLE_POURC_ESC);
 }
 
 void motors_kill(){
@@ -158,53 +171,51 @@ void motors_kill(){
 	log_info("[MOTORS] killing motors...");
 
 	ppm_update(_motors[0], 0.0f);
-    ppm_update(_motors[1], 0.0f);
-    ppm_update(_motors[2], 0.0f);
-    ppm_update(_motors[3], 0.0f);
+	ppm_update(_motors[1], 0.0f);
+	ppm_update(_motors[2], 0.0f);
+	ppm_update(_motors[3], 0.0f);
 
-    log_info("[MOTORS] motors killed !!");
+	log_info("[MOTORS] motors killed !!");
 }
 
-void motors_update(float U0, float U1, float U2, float U3) {
+void motors_update(float U1, float U2, float U3, float U4) {
 
-        // Puissance faible, il ne faut pas que les motors arretent
-        if (U1 < 0.001) {
+	// Puissance faible, il ne faut pas que les motors arretent
+	if (U1 < 0.001) {
+		motors_idle();
+		return;
+	}
 
-                //Hack to counter the fact that the control can put the motor to stop in flight ....
-                //Singleton::get()->motors.speeds(0, 0, 0, 0);
-                motors_idle();
-                return;
-        }
+	// Correction du biais
+	U2 -= drone_motors.BIAS_U2;
+	U3 -= drone_motors.BIAS_U3;
+	U4 -= drone_motors.BIAS_U4;
 
-//        // Correction du biais
-//        U2 -= Singleton::get()->parameters.get(Parameters::BIAS_U2);
-//        U3 -= Singleton::get()->parameters.get(Parameters::BIAS_U3);
-//        U4 -= Singleton::get()->parameters.get(Parameters::BIAS_U4);
-//
-//        // Transformations U_i => Omega_i (1/3)
-//
-//        U1 /= Singleton::get()->parameters.get(Parameters::PHYSICS_B);
-//        U2 /= Singleton::get()->parameters.get(Parameters::PHYSICS_B);
-//        U3 /= Singleton::get()->parameters.get(Parameters::PHYSICS_B);
-//        U4 /= Singleton::get()->parameters.get(Parameters::PHYSICS_D);
+	// Transformations U_i => Omega_i (1/3)
 
-        // Transformations U_i => Omega_i (2/3)
-        float O0 = (U0 + U3 + 2 * U2) / 4;
-        float O1 = (U0 - U3 - 2 * U1) / 4;
-        float O2 = (U0 + U3 - 2 * U2) / 4;
-        float O3 = (U0 - U3 + 2 * U1) / 4;
+	U1 /= drone_motors.PHYSICS_B;
+	U2 /= drone_motors.PHYSICS_B;
+	U3 /= drone_motors.PHYSICS_B;
 
-        // Transformations U_i => Omega_i (3/3)
-        O0 = O0 > 0 ? sqrt(O0) : 0;
-        O1 = O1 > 0 ? sqrt(O1) : 0;
-        O2 = O2 > 0 ? sqrt(O2) : 0;
-        O3 = O3 > 0 ? sqrt(O3) : 0;
+	U4 /= drone_motors.PHYSICS_D;
 
-        // Enregistrement
-//        Singleton::get()->data.set(DataStore::OMEGA_R, O1 + O3 - O2 - O4);
+	// Transformations U_i => Omega_i (2/3)
+	float O1 = (U1 + U4 + 2 * U3) / 4;
+	float O2 = (U1 - U4 - 2 * U2) / 4;
+	float O3 = (U1 + U4 - 2 * U3) / 4;
+	float O4 = (U1 - U4 + 2 * U2) / 4;
+
+	// Transformations U_i => Omega_i (3/3)
+	O1 = O1 > 0 ? sqrt(O1) : 0;
+	O2 = O2 > 0 ? sqrt(O2) : 0;
+	O3 = O3 > 0 ? sqrt(O3) : 0;
+	O4 = O4 > 0 ? sqrt(O4) : 0;
+
+	// Enregistrement
+	drone_motors.OMEGA_R = (O1 + O3 - O2 - O4);
 
 
-        // Envoi de la commande
-        motors_speeds(O0, O1, O2, O3);
+	// Envoi de la commande
+	motors_speeds(O1, O2, O3, O4);
 
 }

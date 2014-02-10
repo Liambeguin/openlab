@@ -154,16 +154,16 @@ void GX3_process_complete_message(const uint8_t id)
 		SCP_get(&r, sizeof(gx3_euler_angles_and_angular_rates_response_t));
 
 		//Writing ROLL, PITCH, YAW, DOT_ROLL, DOT_PITCH, DOT_YAW to "datastore"
-		bigendian2host(&(r.roll));	gx3.roll	= r.roll;
-		bigendian2host(&(r.pitch));	gx3.pitch	= r.pitch;
-		bigendian2host(&(r.yaw));	gx3.yaw 	= r.yaw;
+		bigendian2host(&(r.roll));	drone_gx3.roll	= r.roll;
+		bigendian2host(&(r.pitch));	drone_gx3.pitch	= r.pitch;
+		bigendian2host(&(r.yaw));	drone_gx3.yaw 	= r.yaw;
 
-		bigendian2host(&(r.dot_x));	gx3.dot_roll	= r.dot_x;
-		bigendian2host(&(r.dot_y));	gx3.dot_pitch	= r.dot_y;
-		bigendian2host(&(r.dot_z));	gx3.dot_yaw		= r.dot_z;
+		bigendian2host(&(r.dot_x));	drone_gx3.dot_roll	= r.dot_x;
+		bigendian2host(&(r.dot_y));	drone_gx3.dot_pitch	= r.dot_y;
+		bigendian2host(&(r.dot_z));	drone_gx3.dot_yaw		= r.dot_z;
 
 //		Software killswtich
-		gx3.imu_alive = true;
+		drone_gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
 		//Monitoring
@@ -183,20 +183,20 @@ void GX3_process_complete_message(const uint8_t id)
 			accel_calibration_nb++;
 
 			// Writing ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to datastore
-			bigendian2host(&(r.accel_x));	gx3.accel_bias_x += r.accel_x;
-			bigendian2host(&(r.accel_y));	gx3.accel_bias_y += r.accel_y;
-			bigendian2host(&(r.accel_z));	gx3.accel_bias_z += r.accel_z + 1.0f ;
+			bigendian2host(&(r.accel_x));	drone_gx3.accel_bias_x += r.accel_x;
+			bigendian2host(&(r.accel_y));	drone_gx3.accel_bias_y += r.accel_y;
+			bigendian2host(&(r.accel_z));	drone_gx3.accel_bias_z += r.accel_z + 1.0f ;
 
 		}else{
 			// Writing ACCEL_X, ACCEL_Y, ACCEL_Z to datastore
-			bigendian2host(&(r.accel_x));	gx3.accel_x = r.accel_x * PHYSICS_GX3;
-			bigendian2host(&(r.accel_y));	gx3.accel_y = r.accel_y * PHYSICS_GX3;
-			bigendian2host(&(r.accel_z));	gx3.accel_z = r.accel_z * PHYSICS_GX3;
+			bigendian2host(&(r.accel_x));	drone_gx3.accel_x = r.accel_x * PHYSICS_GX3;
+			bigendian2host(&(r.accel_y));	drone_gx3.accel_y = r.accel_y * PHYSICS_GX3;
+			bigendian2host(&(r.accel_z));	drone_gx3.accel_z = r.accel_z * PHYSICS_GX3;
 
 		}
 
 //		KillSwtich
-		gx3.imu_alive = true;
+		drone_gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
 		//Monitoring
@@ -211,9 +211,9 @@ void GX3_process_complete_message(const uint8_t id)
 		SCP_get(&r, sizeof(gx3_capture_gyro_response_t));
 
 		// Writing GYRO_BIAS_X, GYRO_BIAS_Y, GYRO_BIAS_Z to Datastore
-		bigendian2host(&(r.gyro_bias_x));	gx3.gyro_bias_x = r.gyro_bias_x;
-		bigendian2host(&(r.gyro_bias_y));	gx3.gyro_bias_y = r.gyro_bias_y;
-		bigendian2host(&(r.gyro_bias_z));	gx3.gyro_bias_z = r.gyro_bias_z;
+		bigendian2host(&(r.gyro_bias_x));	drone_gx3.gyro_bias_x = r.gyro_bias_x;
+		bigendian2host(&(r.gyro_bias_y));	drone_gx3.gyro_bias_y = r.gyro_bias_y;
+		bigendian2host(&(r.gyro_bias_z));	drone_gx3.gyro_bias_z = r.gyro_bias_z;
 
 		//GX3 confirm that calibration is completed
 		is_gyro_calibration_completed = true;
@@ -225,9 +225,9 @@ void GX3_process_complete_message(const uint8_t id)
 		SCP_get(&r, sizeof(gx3_write_accel_response_t));
 
 		// Writing ACCEL_BIAS_X, ACCEL_BIAS_Y, ACCEL_BIAS_Z to Datastore
-		bigendian2host(&(r.accel_bias_x));	gx3.accel_bias_x = r.accel_bias_x;
-		bigendian2host(&(r.accel_bias_y));	gx3.accel_bias_y = r.accel_bias_y;
-		bigendian2host(&(r.accel_bias_z));	gx3.accel_bias_z = r.accel_bias_z;
+		bigendian2host(&(r.accel_bias_x));	drone_gx3.accel_bias_x = r.accel_bias_x;
+		bigendian2host(&(r.accel_bias_y));	drone_gx3.accel_bias_y = r.accel_bias_y;
+		bigendian2host(&(r.accel_bias_z));	drone_gx3.accel_bias_z = r.accel_bias_z;
 
 		//GX3 confirm that calibration is completed
 		is_accel_calibration_completed = true;
@@ -251,7 +251,7 @@ void GX3_periodical()
 		gx3_alive_check--;
 
 	else
-		gx3.imu_alive = false;
+		drone_gx3.imu_alive = false;
 
 	GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
 			GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);

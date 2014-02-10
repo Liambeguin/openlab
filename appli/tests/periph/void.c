@@ -20,14 +20,12 @@
 
 
 
+
 #include "printf.h"
-#define NO_DEBUG_HEADER
-#include "debug.h"
 
 #include <stdint.h>
 #include "platform.h"
-
-#include "gx3.h"
+#include "attitudeController.h"
 
 int main()
 {
@@ -40,16 +38,6 @@ int main()
 			"\n -------------------\n");
 
     uint8_t count = 0;
-
-//    gx3_test();
-
-//    int i=0;
-//    for (i = 0; i < 0x80000; i++)
-//            {
-//                __asm__("nop");
-//            }
-
-//    get_test();
 
     while (1);
     {

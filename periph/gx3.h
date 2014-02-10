@@ -71,7 +71,7 @@ typedef struct{
 
 
 /* GX3 "Datastore" */
-imu_t gx3;
+imu_t drone_gx3;
 
 
 #endif /* GX3_H_ */
