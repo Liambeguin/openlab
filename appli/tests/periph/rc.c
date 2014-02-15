@@ -29,6 +29,7 @@
 
 #include "platform.h"
 #include "rc.h"
+#include "attitudeController.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -81,8 +82,19 @@ void rc_dummy_task(void *arg){
     leds_on(F4_LED_GREEN);
 
 
+
+    attitudeController_init();
+
     while(1){
-    	rc_print_channel_values();
+//    	rc_print_channel_values();
+    	rc_periodical();
+
+    	attitudeController_periodical();
+
+    	if(drone_radioController.kill_switch)
+    		log_debug("%f", drone_radioController.throttle);
+    	else
+    		log_error("%f", drone_radioController.throttle);
     	vTaskDelay(configTICK_RATE_HZ/4);
     }
 

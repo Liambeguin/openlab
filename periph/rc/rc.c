@@ -28,13 +28,14 @@
 #include "exti.h"
 #include "stm32f4xx/syscfg.h"
 #include "stm32f4xx/nvic_.h"
-
+#include "timer.h"
 
 /**
  * To change span, change timer frequency in <platform>_lib.c
  */
 
 channel_t _channel[6];
+timer_t _timer;
 
 void generic_exti_handler(void *arg){
 
@@ -46,8 +47,9 @@ void generic_exti_handler(void *arg){
 	}
 }
 
-void rc_config_channel(channel_t *channels){
+void rc_config_channel(timer_t timer, channel_t *channels){
 
+	_timer = timer;
 	exti_line_t exti_line;
 	nvic_irq_line_t nvic_line;
 
@@ -159,27 +161,28 @@ void rc_print_channel_values(){
 }
 
 
-//TODO convert on  [0; 1] scale
+
+// Convert on  [0; 1] scale
 float get_power(uint32_t channel_value){
-	return 0.0f;
+	return 1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f;
 }
-//TODO convert on [-1; 1] scale
+// Convert on [-1; 1] scale
 float get_rad  (uint32_t channel_value){
-	return 0.0f;
+	return (1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f)*2.0f-1.0f;
 }
 
 void rc_periodical(){
 
 	drone_radioController.throttle 	= ( get_power(_channel[0].value) *drone_radioController.RC_FACTOR_THRUST) - 0.15f;
 
-	drone_radioController.isAlive		= true;
+	drone_radioController.isAlive	= true;
 
 	drone_radioController.roll 		= get_rad(_channel[1].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
-	drone_radioController.pitch 		= get_rad(_channel[2].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
+	drone_radioController.pitch 	= get_rad(_channel[2].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
 	drone_radioController.yaw 		= get_rad(_channel[3].value) * drone_radioController.RC_FACTOR_YAW;
 
 
-	drone_radioController.kill_switch 	= (get_power(_channel[4].value)>0.5f)? true:false ;
-	drone_radioController.manual_switch 	= (get_power(_channel[5].value)>0.5f)? true:false ;
+	drone_radioController.kill_switch	= (get_power(_channel[4].value)>0.5f)? true:false ;
+	drone_radioController.manual_switch = (get_power(_channel[5].value)>0.5f)? true:false ;
 
 }

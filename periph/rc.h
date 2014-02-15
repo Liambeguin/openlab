@@ -47,11 +47,11 @@ typedef struct {
 	};
 
 	struct{
-		uint32_t throttle;
+		float throttle;
 
-		uint32_t roll;
-		uint32_t pitch;
-		uint32_t yaw;
+		float roll;
+		float pitch;
+		float yaw;
 
 		bool kill_switch;
 		bool manual_switch;
@@ -63,8 +63,12 @@ typedef struct {
 
 rc_t drone_radioController;
 
-void rc_config_channel(channel_t *channels);
+void rc_config_channel(timer_t timer, channel_t *channels);
 void rc_print_channel_values();
+// Convert on  [0; 1] scale
+float get_power(uint32_t channel_value);
+// Convert on [-1; 1] scale
+float get_rad  (uint32_t channel_value);
 
 void rc_periodical();
 

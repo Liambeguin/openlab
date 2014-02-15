@@ -35,6 +35,7 @@ target_link_libraries(platform
 	printf
 	event
 	softtimer
+	differential
 	att_ctrl
 
 # Periph 

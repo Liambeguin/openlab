@@ -194,9 +194,9 @@ static void timer_drivers_setup()
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
                     - 1);
 
-    // Setting Soft timer to about 2MHz
+    // Setting Soft timer to about 32kHz
     timer_select_internal_clock(TIM_2,
-            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 32768)
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)//32768)
                     - 1);
 
     // Start ALL timers

@@ -207,7 +207,7 @@ static void rc_setup(){
 
 	};
 
-	rc_config_channel(channels);
+	rc_config_channel(TIM_2, channels);
 }
 
 static void gx3_setup(){
