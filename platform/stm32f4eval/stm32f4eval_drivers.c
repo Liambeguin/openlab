@@ -66,7 +66,7 @@ void platform_drivers_setup()
 //    spi_drivers_setup();
     i2c_drivers_setup();
 
-//    ethmac_drivers_setup();
+    ethmac_drivers_setup();
 }
 
 static void i2c_drivers_setup(){
@@ -305,4 +305,9 @@ void i2c2_ev_isr()
 void i2c2_er_isr()
 {
     i2c_handle_er_interrupt(I2C_2);
+}
+
+void eth_isr()
+{
+    ethmac_handle_interrupt();
 }

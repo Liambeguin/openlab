@@ -80,7 +80,8 @@
 enum
 {
     /** Standard timer frequency, corresponding to a 32kHz clock */
-    SOFT_TIMER_FREQUENCY = 32768,
+//    SOFT_TIMER_FREQUENCY = 32768,
+	SOFT_TIMER_FREQUENCY = 2097152,
 };
 
 /**

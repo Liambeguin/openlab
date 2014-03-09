@@ -38,11 +38,12 @@ void gx3_periodical_task(void *arg){
     // arg is not used
     (void) arg;
 
-//    while (1){
-//    	GX3_periodical();
-//    	vTaskDelay(configTICK_RATE_HZ/10);
-//
-//    }
+    while (1){
+    	GX3_periodical();
+    	log_error("aa : %f", drone_gx3.accel_x);
+    	vTaskDelay(configTICK_RATE_HZ/10);
+
+    }
 
     GX3_calibrate();
 
@@ -56,7 +57,7 @@ void gx3_decode_task(void *arg){
     (void) arg;
 
     while (1){
-//    	GX3_decode_uart_rx();
+    	GX3_decode_uart_rx();
     	vTaskDelay(configTICK_RATE_HZ/300);
 
     }

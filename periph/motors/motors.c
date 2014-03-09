@@ -135,26 +135,27 @@ float motors_rad_to_percent(float v) {
 		return  0.01 * ( 0.00011424106 * (v*v) + 0.02670861842 * v ); // equation return in %
 }
 
-void motors_speeds(const float M0, const float M1, const float M2, const float M3){
+void motors_speeds(const float M1, const float M2, const float M3, const float M4){
 
 	//Register motor speed in rad/s
-	drone_motors.M0 = M0;
 	drone_motors.M1 = M1;
 	drone_motors.M2 = M2;
 	drone_motors.M3 = M3;
+	drone_motors.M4 = M4;
 
 
 	//Transform in ppm duty, if speed is to low, idle motor !!!!
-	const float V0 = ( M0 > 5 ? motors_rad_to_percent(M0) : drone_motors.IDLE_POURC_ESC);
 	const float V1 = ( M1 > 5 ? motors_rad_to_percent(M1) : drone_motors.IDLE_POURC_ESC);
 	const float V2 = ( M2 > 5 ? motors_rad_to_percent(M2) : drone_motors.IDLE_POURC_ESC);
 	const float V3 = ( M3 > 5 ? motors_rad_to_percent(M3) : drone_motors.IDLE_POURC_ESC);
+	const float V4 = ( M4 > 5 ? motors_rad_to_percent(M4) : drone_motors.IDLE_POURC_ESC);
 
 
-	ppm_update(_motors[0], V0);
-	ppm_update(_motors[1], V1);
-	ppm_update(_motors[2], V2);
-	ppm_update(_motors[3], V3);
+	ppm_update(_motors[0], V1);
+	ppm_update(_motors[1], V2);
+	ppm_update(_motors[2], V3);
+	ppm_update(_motors[3], V4);
+
 
 }
 
@@ -168,14 +169,14 @@ void motors_idle(){
 
 void motors_kill(){
 
-	log_info("[MOTORS] killing motors...");
+//	log_info("[MOTORS] killing motors...");
 
 	ppm_update(_motors[0], 0.0f);
 	ppm_update(_motors[1], 0.0f);
 	ppm_update(_motors[2], 0.0f);
 	ppm_update(_motors[3], 0.0f);
 
-	log_info("[MOTORS] motors killed !!");
+//	log_info("[MOTORS] motors killed !!");
 }
 
 void motors_update(float U1, float U2, float U3, float U4) {

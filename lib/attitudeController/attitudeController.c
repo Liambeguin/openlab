@@ -16,7 +16,7 @@
  *  Created on: Feb 7, 2014
  *      Author: liam <liambeguin.at.gmail.com>
  */
-
+#include "debug.h"
 #include "attitudeController.h"
 
 #include "motors.h"
@@ -32,8 +32,6 @@
 
 
 
-
-uint32_t task_period = 1000*DT;
 
 void attitudeController_init(){
 
@@ -110,14 +108,14 @@ void attitudeController_periodical()
 //	else
 //	{
 //		Singleton::get()->data.set(DataStore::KILL_ENABLED, false);
-//		if(Singleton::get()->data.get(DataStore::RC_MANUAL) > 0.5)
-//		{
+		if(drone_radioController.manual_switch)
 			attitudeController_rc_control();
-//		}
-//		else
-//		{
+
+		else
+		{
+			log_error("not in MANUAL mode...");
 //			//control_pc();
 //			TESTCTRL();
-//		}
+		}
 //	}
 }

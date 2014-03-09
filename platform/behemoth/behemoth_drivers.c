@@ -46,7 +46,7 @@ static void gpio_drivers_setup();
 static void uart_drivers_setup();
 
 /** TIMER Section **/
-#define TIM2_FREQUENCY	262144
+//#define TIM2_FREQUENCY	262144
 static void timer_drivers_setup();
 
 /** SPI Section **/
@@ -202,6 +202,7 @@ static void timer_drivers_setup()
     // Start ALL timers
     timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
     timer_start(TIM_2, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
+
 
     timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
 }

@@ -253,12 +253,9 @@ void GX3_periodical()
 	else
 		drone_gx3.imu_alive = false;
 
+
 	GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
 			GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);
-
-	GX3_send_request(GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST,
-			GX3_ACCELERATIONS_AND_ANGULAR_RATES_REQUEST_SIZE);
-
 
 	//Monitoring
 	gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());

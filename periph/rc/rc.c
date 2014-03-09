@@ -22,6 +22,7 @@
 #include "platform.h"
 #include "debug.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "rc.h"
 #include "gpio.h"
@@ -186,3 +187,8 @@ void rc_periodical(){
 	drone_radioController.manual_switch = (get_power(_channel[5].value)>0.5f)? true:false ;
 
 }
+
+
+
+
+

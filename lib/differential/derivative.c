@@ -22,6 +22,7 @@
 
 #include "derivative.h"
 
+
 void derivative_init(derivative_t *derivee, float dt){
 	derivee->dt = dt;
 	derivee->derivative = 0;
