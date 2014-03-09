@@ -114,6 +114,7 @@ void attitudeController_periodical()
 		else
 		{
 			log_error("not in MANUAL mode...");
+			motors_kill();
 //			//control_pc();
 //			TESTCTRL();
 		}

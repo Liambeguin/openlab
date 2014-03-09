@@ -37,7 +37,6 @@ int8_t	GX3_get_message_length(const uint8_t id);
 void	GX3_process_complete_message(const uint8_t id);
 //void	GX3_decode_uart_rx(void);
 void 	GX3_write_bias();
-void 	GX3_calibrate();
 void	GX3_periodical(void);
 void	GX3_send_request(uint8_t const *request, uint8_t size);
 

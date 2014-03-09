@@ -40,14 +40,10 @@ void gx3_periodical_task(void *arg){
 
     while (1){
     	GX3_periodical();
-    	log_error("aa : %f", drone_gx3.accel_x);
+    	log_error("%f", drone_gx3.accel_x);
     	vTaskDelay(configTICK_RATE_HZ/10);
 
     }
-
-    GX3_calibrate();
-
-   	while(1);
 }
 
 
@@ -79,9 +75,8 @@ int main()
     leds_on(LED_0);
     leds_off(LED_1);
 
-    // Create a task to blink
     ret = xTaskCreate(gx3_decode_task, (const signed char * const) "gx3_decode_task",
-                      configMINIMAL_STACK_SIZE, NULL, 1, &blink_handle);
+                      configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
     switch (ret)
     {
@@ -96,12 +91,11 @@ int main()
             return 0;
 
         default:
-            printf("Blink task created successfully\n");
+            printf("imu decode task created successfully\n");
     }
 
-    // Create a task to print hello world
     xTaskCreate(gx3_periodical_task, (const signed char * const) "gx3_periodical_task",
-                configMINIMAL_STACK_SIZE, NULL, 1, &hello_handle);
+                configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
     switch (ret)
     {
@@ -116,7 +110,7 @@ int main()
             return 0;
 
         default:
-            printf("Hello task created successfully\n");
+            printf("GX3 task created successfully\n");
     }
 
     // Start the scheduler
