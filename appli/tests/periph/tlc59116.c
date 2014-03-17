@@ -108,11 +108,13 @@ int main(void){
 
 void set_all_led(uint8_t r, uint8_t g, uint8_t b){
 
-	tlc59116_set_led_color(TLC59116_LED0, r, g, b);
-	tlc59116_set_led_color(TLC59116_LED1, r, g, b);
-	tlc59116_set_led_color(TLC59116_LED2, r, g, b);
-	tlc59116_set_led_color(TLC59116_LED3, r, g, b);
-	tlc59116_set_led_color(TLC59116_LED4, r, g, b);
+	tlc59116_color_t color = {r, g, b};
+
+	tlc59116_set_led_color(TLC59116_LED0, color);
+	tlc59116_set_led_color(TLC59116_LED1, color);
+	tlc59116_set_led_color(TLC59116_LED2, color);
+	tlc59116_set_led_color(TLC59116_LED3, color);
+	tlc59116_set_led_color(TLC59116_LED4, color);
 }
 
 

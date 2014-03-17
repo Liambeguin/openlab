@@ -64,7 +64,7 @@ void tlc59116_init(){
 	i2c_tx(_led_driver.i2c, _led_driver.addr, tx_buf, 5);
 
 	//Make LED0 blink for init
-	tlc59116_set_led_color(TLC59116_LED0, 0x0, 0x0, 0xff);
+	tlc59116_set_led_color(TLC59116_LED0, RGB_BLUE);
 
 	read_addr = TLC59116_REG_EFLAG1 | TLC59116_CTRL_AUTO_INC;
 	i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr, 1, rx_buf, 2);
@@ -74,11 +74,11 @@ void tlc59116_init(){
 	else
 		log_info("[LED] TLC59116 OK !!");
 
-	tlc59116_set_led_color(TLC59116_LED0, 0x0, 0x0, 0x00);
-	tlc59116_set_led_color(TLC59116_LED1, 0x0, 0x0, 0x00);
-	tlc59116_set_led_color(TLC59116_LED2, 0x0, 0x0, 0x00);
-	tlc59116_set_led_color(TLC59116_LED3, 0x0, 0x0, 0x00);
-	tlc59116_set_led_color(TLC59116_LED4, 0x0, 0x0, 0x00);
+	tlc59116_set_led_color(TLC59116_LED0, RGB_OFF);
+	tlc59116_set_led_color(TLC59116_LED1, RGB_OFF);
+	tlc59116_set_led_color(TLC59116_LED2, RGB_OFF);
+	tlc59116_set_led_color(TLC59116_LED3, RGB_OFF);
+	tlc59116_set_led_color(TLC59116_LED4, RGB_OFF);
 }
 
 void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){
@@ -130,9 +130,9 @@ void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){
 
 }
 
-void tlc59116_set_led_color(tlc59116_led_t led, uint8_t red, uint8_t green, uint8_t blue){
+void tlc59116_set_led_color(tlc59116_led_t led, tlc59116_color_t color){
 
-	uint8_t tmp[4] = {0x00, red, green, blue};
+	uint8_t tmp[4] = {0x00, color.green, color.red, color.blue};
 	char name[6] = {'L', 'E', 'D', '_', 'X', '\0'};
 
 	switch(led){
