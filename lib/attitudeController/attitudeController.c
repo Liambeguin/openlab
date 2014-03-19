@@ -108,15 +108,15 @@ void attitudeController_periodical()
 //	else
 //	{
 //		Singleton::get()->data.set(DataStore::KILL_ENABLED, false);
-		if(drone_radioController.manual_switch)
+//		if(drone_radioController.manual_switch)
 			attitudeController_rc_control();
 
-		else
-		{
-			log_error("not in MANUAL mode...");
-			motors_kill();
+//		else
+//		{
+//			log_error("not in MANUAL mode...");
+//			motors_kill();
 //			//control_pc();
 //			TESTCTRL();
-		}
+//		}
 //	}
 }

@@ -183,8 +183,8 @@ void rc_periodical(){
 	drone_radioController.yaw 		= get_rad(_channel[3].value) * drone_radioController.RC_FACTOR_YAW;
 
 
-	drone_radioController.kill_switch	= (get_power(_channel[4].value)>0.5f)? true:false ;
-	drone_radioController.manual_switch = (get_power(_channel[5].value)>0.5f)? true:false ;
+	drone_radioController.kill_switch	= (get_power(_channel[4].value)<0.5f)? true:false ;
+	drone_radioController.manual_switch = (get_power(_channel[5].value)<0.5f)? true:false ;
 
 }
 
