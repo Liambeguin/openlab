@@ -30,7 +30,15 @@
 #include "pitch.h"
 #include "yaw.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
 
+typedef enum{
+	STATE_PLATFORM_IDLE = 0 ,
+	STATE_ReadyTo_FLY,
+	STATE_GO,
+
+}state_t;
 
 
 void attitudeController_init(){
@@ -94,29 +102,79 @@ void attitudeController_rc_control(){
 	}
 
 
-void attitudeController_periodical()
-{
-	//TODO implement is_dead()
-//	if (Singleton::get()->is_dead())
-//	{
-//		Singleton::get()->data.set(DataStore::KILL_ENABLED, true);
-//		Singleton::get()->data.set(DataStore::IDLE, false);
-//		Singleton::get()->motors.kill();
-//
-//		this->ctrl_reset();
-//	}
-//	else
-//	{
-//		Singleton::get()->data.set(DataStore::KILL_ENABLED, false);
-//		if(drone_radioController.manual_switch)
-			attitudeController_rc_control();
+void attitudeController_periodical(void *arg){
 
-//		else
-//		{
-//			log_error("not in MANUAL mode...");
-//			motors_kill();
-//			//control_pc();
-//			TESTCTRL();
-//		}
-//	}
+	attitudeController_init();
+
+	static state_t motors_state = STATE_PLATFORM_IDLE;
+	static uint32_t last_time, last_go_time = 0;
+
+	while(1){
+
+
+		if (drone_radioController.kill_switch)
+			motors_state = STATE_PLATFORM_IDLE;
+
+
+		switch(motors_state){
+
+		case STATE_PLATFORM_IDLE:
+
+			motors_kill();
+
+			if (!drone_radioController.kill_switch && drone_radioController.start_sequence){
+				last_time = soft_timer_time();
+				motors_state = STATE_ReadyTo_FLY;
+			}
+			else
+				motors_state = STATE_PLATFORM_IDLE;
+			break;
+
+
+		case STATE_ReadyTo_FLY:
+
+			motors_idle();
+
+
+			if(drone_radioController.throttle >= 0.1f)
+				motors_state = STATE_GO;
+
+			else{
+
+				if(soft_timer_time()-last_time < soft_timer_s_to_ticks(3))
+					motors_state = STATE_ReadyTo_FLY;
+			else
+					motors_state = STATE_PLATFORM_IDLE;
+
+			}
+
+			break;
+
+		case STATE_GO:
+
+			if(drone_gx3.okToFly)
+				attitudeController_rc_control();
+			else
+				motors_kill();
+
+
+			if (drone_radioController.throttle <= 0.1f){
+
+				last_go_time ++;
+				motors_idle();
+				if (last_go_time >= 300 || drone_radioController.start_sequence){
+					motors_state = STATE_PLATFORM_IDLE;
+				}
+			}
+			else{
+				motors_state = STATE_GO;
+				last_go_time = 0;
+			}
+
+			break;
+
+		}
+
+		vTaskDelay(arg);
+	}
 }

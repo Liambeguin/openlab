@@ -41,6 +41,11 @@
 #define GX3_TIME_CONVERT (0.000016f) //GX3 doc p.51 (1/62500)
 
 
+#include "FreeRTOS.h"
+#include "task.h"
+
+
+
 uart_t _gx3_uart;
 
 uint8_t gx3_alive_check;
@@ -100,7 +105,7 @@ void GX3_decode_uart_rx(void)
 	uint8_t data=-1;
 	cb_read(&rx_buffer, &data);
 	if(data!=-1){
-//		log_warning("0x%02x", data);
+		//		log_warning("0x%02x", data);
 		SCP_decode(data);
 	}
 }
@@ -162,7 +167,7 @@ void GX3_process_complete_message(const uint8_t id)
 		bigendian2host(&(r.dot_y));	drone_gx3.dot_pitch	= r.dot_y;
 		bigendian2host(&(r.dot_z));	drone_gx3.dot_yaw		= r.dot_z;
 
-//		Software killswtich
+		//		Software killswtich
 		drone_gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
@@ -195,7 +200,7 @@ void GX3_process_complete_message(const uint8_t id)
 
 		}
 
-//		KillSwtich
+		//		KillSwtich
 		drone_gx3.imu_alive = true;
 		gx3_alive_check = 5;
 
@@ -245,21 +250,66 @@ void GX3_process_complete_message(const uint8_t id)
 
 }
 
-void GX3_periodical()
+void GX3_periodical(void *arg)
 {
-	if(gx3_alive_check)
-		gx3_alive_check--;
+	while(1){
+		if(gx3_alive_check)
+			gx3_alive_check--;
 
-	else
-		drone_gx3.imu_alive = false;
+		else
+			drone_gx3.imu_alive = false;
 
 
-	GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
-			GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);
+		GX3_send_request(GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST,
+				GX3_EULER_ANGLES_AND_ANGULAR_RATES_REQUEST_SIZE);
 
-	//Monitoring
-	gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());
+		//Monitoring
+		gx3_time_cmd_sent_us = soft_timer_ticks_to_us(soft_timer_time());
+
+
+		/*** Critical pitch angles ***/
+		if (drone_gx3.pitch > 1.5f){
+			log_error("PITCH TOO HIGH");
+			drone_gx3.okToFly = false;
+		}
+		else if (drone_gx3.pitch < -1.5f){
+			log_error("PITCH TOO LOW");
+			drone_gx3.okToFly = false;
+		}
+
+		/*** Critical roll  angles ***/
+		else if (drone_gx3.roll > 1.5f){
+			log_error("ROLL TOO HIGH");
+			drone_gx3.okToFly = false;
+		}
+		else if (drone_gx3.roll < -1.5f){
+			log_error("ROLL TOO LOW");
+			drone_gx3.okToFly = false;
+		}
+		else
+			drone_gx3.okToFly = true;
+
+
+		vTaskDelay(arg);
+	}
+
+
 }
+
+void imu_decode_periodical(void *arg){
+
+	// arg is not used
+	(void) arg;
+
+	while (1){
+		GX3_decode_uart_rx();
+
+		//FIXME : repalce with vTaskDelay
+		//vTaskDelay(TASK_IMU_DECODE_PERIOD);
+		soft_timer_delay_us(5000/30);
+    }
+}
+
 
 
 //commented in initial code
@@ -281,7 +331,7 @@ void GX3_write_bias()
 	SCP_send_float(100.0f);
 	SCP_send_float(200.0f);
 	SCP_send_float(17.0f);
-*/
+	 */
 
 	//is_accel_calibration_sent	   = true;
 	//is_accel_calibration_completed = true;

@@ -57,6 +57,8 @@ typedef struct {
 		bool manual_switch;
 
 		bool isAlive;
+
+		bool start_sequence;
 	};
 
 }rc_t;

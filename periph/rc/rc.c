@@ -31,6 +31,21 @@
 #include "stm32f4xx/nvic_.h"
 #include "timer.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
+#define TASK_RC_PERIOD				(configTICK_RATE_HZ*10/1000)	// 10 ms
+
+
+//Start sequence on radio controller (down-left on two joysticks)
+#define START_SEQUENCE		(drone_radioController.throttle <=  0.1f	&& \
+							 drone_radioController.yaw		<= -2.0f 	&& \
+							 drone_radioController.pitch	>=  0.4f	&& \
+							 drone_radioController.roll 	<= -0.3f  	)
+
+
+
+
 /**
  * To change span, change timer frequency in <platform>_lib.c
  */
@@ -172,7 +187,13 @@ float get_rad  (uint32_t channel_value){
 	return (1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f)*2.0f-1.0f;
 }
 
-void rc_periodical(){
+
+
+void rc_periodical(void *arg){
+
+	while(1){
+
+	static uint32_t last_timer_time = 0;
 
 	drone_radioController.throttle 	= ( get_power(_channel[0].value) *drone_radioController.RC_FACTOR_THRUST) - 0.15f;
 
@@ -186,6 +207,18 @@ void rc_periodical(){
 	drone_radioController.kill_switch	= (get_power(_channel[4].value)<0.5f)? true:false ;
 	drone_radioController.manual_switch = (get_power(_channel[5].value)<0.5f)? true:false ;
 
+
+	if (START_SEQUENCE){
+
+		last_timer_time = soft_timer_time();
+		drone_radioController.start_sequence = 1;
+	}
+	else if (soft_timer_time()-last_timer_time >= 500)
+		drone_radioController.start_sequence = 0;
+
+
+	vTaskDelay(TASK_RC_PERIOD);
+	}
 }
 
 
