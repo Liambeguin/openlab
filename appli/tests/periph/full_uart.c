@@ -54,7 +54,7 @@ int main(void){
 	{
 		leds_off(0xFF);
 		leds_on(count++);
-		uart_transfer(uart_external, &test, 1);
+//		uart_transfer(uart_external, &test, 1);
 
         int i;
 

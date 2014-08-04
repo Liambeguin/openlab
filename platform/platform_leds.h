@@ -35,9 +35,10 @@
  */
 enum
 {
-    LED_0 = 0x1,
-    LED_1 = 0x2,
-    LED_2 = 0x4,
+    LED_1 = 0x1,
+    LED_2 = 0x2,
+    LED_3 = 0x4,
+    LED_4 = 0x8,
 };
 
 /**

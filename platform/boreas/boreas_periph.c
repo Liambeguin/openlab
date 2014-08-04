@@ -35,7 +35,7 @@ static void motors_setup();
 
 // PE12 - LEVEL SHIFTER ENABLE
 #define LEVELSHIFTER_EN_PORT	GPIO_E
-#define LEVELSHIFTER_EN_PIN		GPIO_PIN_12
+#define LEVELSHIFTER_EN_PIN	GPIO_PIN_12
 
 
 /** RC setup **/
@@ -56,8 +56,8 @@ static void led_driver_setup();
 
 void platform_periph_setup()
 {
-//	motors_setup();
-//	rc_setup();
+	motors_setup();
+	rc_setup();
  	led_driver_setup();
 //	gx3_setup();
 }
@@ -127,36 +127,8 @@ static void rc_setup(){
 
 	channel_t channels[] = {
 			{
-					.port = GPIO_C,
-					.pin = GPIO_PIN_6,
-					.syscfg_port = SYSCFG_PORT_C,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_C,
-					.pin = GPIO_PIN_7,
-					.syscfg_port = SYSCFG_PORT_C,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_B,
-					.pin = GPIO_PIN_0,
-					.syscfg_port = SYSCFG_PORT_B,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_B,
-					.pin = GPIO_PIN_1,
-					.syscfg_port = SYSCFG_PORT_B,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
 					.port = GPIO_D,
-					.pin = GPIO_PIN_12,
+					.pin = GPIO_PIN_14,
 					.syscfg_port = SYSCFG_PORT_D,
 					.last_time = 0,
 					.value = 0,
@@ -170,14 +142,42 @@ static void rc_setup(){
 			},
 			{
 					.port = GPIO_D,
-					.pin = GPIO_PIN_14,
+					.pin = GPIO_PIN_12,
+					.syscfg_port = SYSCFG_PORT_D,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_D,
+					.pin = GPIO_PIN_11,
+					.syscfg_port = SYSCFG_PORT_D,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_D,
+					.pin = GPIO_PIN_12,
+					.syscfg_port = SYSCFG_PORT_D,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_D,
+					.pin = GPIO_PIN_10,
+					.syscfg_port = SYSCFG_PORT_D,
+					.last_time = 0,
+					.value = 0,
+			},
+			{
+					.port = GPIO_D,
+					.pin = GPIO_PIN_9,
 					.syscfg_port = SYSCFG_PORT_D,
 					.last_time = 0,
 					.value = 0,
 			},
 //			{
 //					.port = GPIO_D,
-//					.pin = GPIO_PIN_15,
+//					.pin = GPIO_PIN_8,
 //					.syscfg_port = SYSCFG_PORT_D,
 //					.last_time = 0,
 //					.value = 0,

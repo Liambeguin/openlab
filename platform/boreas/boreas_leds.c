@@ -53,7 +53,7 @@ void leds_off(uint8_t leds)
     {
         if (leds & (1 << i))
         {
-            gpio_pin_clear(leds_gpio[i], leds_pin[i]);
+		gpio_pin_set(leds_gpio[i], leds_pin[i]);
         }
     }
 }
@@ -64,7 +64,7 @@ void leds_on(uint8_t leds)
     {
         if (leds & (1 << i))
         {
-            gpio_pin_set(leds_gpio[i], leds_pin[i]);
+		gpio_pin_clear(leds_gpio[i], leds_pin[i]);
         }
     }
 }

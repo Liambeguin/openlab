@@ -1,6 +1,6 @@
 #
-# This file is part of DronolabSTM32-embedded. 
-# 
+# This file is part of DronolabSTM32-embedded.
+#
 
 
 # Include the STM32 drivers folder
@@ -12,7 +12,7 @@ include_directories(
 # Add the platform library
 add_library(platform STATIC
 	${PROJECT_SOURCE_DIR}/platform/platform
-	boreas 
+	boreas
 	boreas_button
 	boreas_leds
 	boreas_drivers
@@ -28,7 +28,7 @@ set_property(TARGET platform APPEND PROPERTY LINK_INTERFACE_MULTIPLICITY 3)
 target_link_libraries(platform
 # Driver
 	drivers_stm32f4xx
-	
+
 # Lib
 	freertos
 	random
@@ -38,12 +38,9 @@ target_link_libraries(platform
 	differential
 	att_ctrl
 
-# Periph 
-#	lis302dl
+# Periph
 	motors
 	rc
 	gx3
 	tlc59116
-	
 	)
-	

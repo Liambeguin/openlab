@@ -1,10 +1,10 @@
 /*
- * This file is part of DronolabSTM32-embedded 
+ * This file is part of DronolabSTM32-embedded
  *
- * DronolabSTM32-embedded is a student project designed 
+ * DronolabSTM32-embedded is a student project designed
  * for flying drones.
  *
- * Go to < dronolab.etsmtl.ca > to find out more about 
+ * Go to < dronolab.etsmtl.ca > to find out more about
  * the project
  *
  *

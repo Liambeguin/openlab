@@ -39,9 +39,9 @@ static void gpio_drivers_setup();
 
 /** UART Section **/
 //#define UART1_EXTERNAL_BAUDRATE		500000
-#define UART1_PRINT_BAUDRATE 		  500000
+#define UART1_PRINT_BAUDRATE		500000
 //#define UART3_GX3_BAUDRATE 			  230400
-//#define UART4_EXTERNAL_BAUDRATE		500000
+#define UART4_EXTERNAL_BAUDRATE		500000
 //#define UART5_EXTERNAL_BAUDRATE		500000
 static void uart_drivers_setup();
 
@@ -61,22 +61,17 @@ static void i2c_drivers_setup();
 
 void platform_drivers_setup()
 {
-    gpio_drivers_setup();
-    uart_drivers_setup();
-    timer_drivers_setup();
+	gpio_drivers_setup();
+	uart_drivers_setup();
+	timer_drivers_setup();
 
-    i2c_drivers_setup();
-    spi_drivers_setup();
+	i2c_drivers_setup();
+//	spi_drivers_setup();
 }
 
 static void i2c_drivers_setup(){
 
-	/** I2C_1 configuration for external purpose **/
-	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_8);
-	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_9);
-	i2c_enable(I2C_1, I2C1_CLOCK_MODE);
-
-	/** I2C_2 configuration for LED Driver **/
+	/** I2C_2 configuration for RGB LED Driver **/
 	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_10);
 	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_11);
 	i2c_enable(I2C_2, I2C_CLOCK_MODE_FAST);
@@ -84,33 +79,32 @@ static void i2c_drivers_setup(){
 
 void i2c1_ev_isr()
 {
-    i2c_handle_ev_interrupt(I2C_1);
+	i2c_handle_ev_interrupt(I2C_1);
 }
 
 void i2c1_er_isr()
 {
-    i2c_handle_er_interrupt(I2C_1);
+	i2c_handle_er_interrupt(I2C_1);
 }
 void i2c2_ev_isr()
 {
-    i2c_handle_ev_interrupt(I2C_2);
+	i2c_handle_ev_interrupt(I2C_2);
 }
 
 void i2c2_er_isr()
 {
-    i2c_handle_er_interrupt(I2C_2);
+	i2c_handle_er_interrupt(I2C_2);
 }
 
 
 
 static void spi_drivers_setup()
 {
-	//TODO some day
-	//SPI3 config Memory
-//	gpio_set_spi_clk(GPIO_B, GPIO_PIN_3);
-//	gpio_set_spi_miso(GPIO_B, GPIO_PIN_4);
-//	gpio_set_spi_mosi(GPIO_B, GPIO_PIN_5);
-//	spi_enable(SPI_3, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
+	//SPI1 to extern
+	gpio_set_spi_clk(GPIO_A,  GPIO_PIN_5);
+	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
+	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
+	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
 
 }
 
@@ -130,20 +124,23 @@ static void gpio_drivers_setup()
 
 /* UART declaration */
 uart_t uart_print = UART_1;
+uart_t uart_external = UART_4;
 static void uart_drivers_setup()
 {
-	// Enable print UART1
+	/** Enable print UART1 **/
 	gpio_set_uart_tx(GPIO_B, GPIO_PIN_6);
 	gpio_set_uart_rx(GPIO_B, GPIO_PIN_7);
 	uart_enable(UART_1, UART1_PRINT_BAUDRATE);
 
-	// GX3 UART_3 is set up in <platform>_periph.c
+	/** Enable RS232 UARTs **/
+	// NOTE : GX3 uart must be set up in <platform>_periph.c
 
-//	// Enable external UART4
-//	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
-//	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
-//	uart_enable(UART_4, UART4_EXTERNAL_BAUDRATE);
-//
+
+	// Enable external UART4
+	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
+	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
+	uart_enable(UART_4, UART4_EXTERNAL_BAUDRATE);
+
 //	// Enable external UART5
 //	gpio_set_uart_tx(GPIO_C, GPIO_PIN_12);
 //	gpio_set_uart_rx(GPIO_D, GPIO_PIN_2);0

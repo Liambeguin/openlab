@@ -177,7 +177,6 @@ void rc_print_channel_values(){
 }
 
 
-
 // Convert on  [0; 1] scale
 float get_power(uint32_t channel_value){
 	return 1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f;

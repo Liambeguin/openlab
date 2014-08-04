@@ -1,10 +1,10 @@
 /*
- * This file is part of DronolabSTM32-embedded 
+ * This file is part of DronolabSTM32-embedded
  *
- * DronolabSTM32-embedded is a student project designed 
+ * DronolabSTM32-embedded is a student project designed
  * for flying drones.
  *
- * Go to < dronolab.etsmtl.ca > to find out more about 
+ * Go to < dronolab.etsmtl.ca > to find out more about
  * the project
  *
  *
@@ -46,8 +46,8 @@ int main(void){
 	//init platform
 	platform_init();
 
-	printf("\n\n Test of dummy RC on STM32F4eval "
-				"\n -------------------\n");
+	printf("\n\n      Dummy RC"
+	         "\n -------------------\n");
 
 	// Set led to show device is on
     leds_on(0xff);
@@ -79,7 +79,7 @@ void rc_dummy_task(void *arg){
     (void) arg;
 
     leds_off(0xff);
-    leds_on(F4_LED_GREEN);
+    leds_on(LED_1 | LED_3);
 
 
 

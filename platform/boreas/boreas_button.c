@@ -25,17 +25,20 @@
 
 #include "gpio_.h"
 
-#define BUTTON_GPIO_PORT GPIO_A
-#define BUTTON_GPIO_PIN GPIO_PIN_10
+#define BUTTON1_GPIO_PORT GPIO_A
+#define BUTTON1_GPIO_PIN GPIO_PIN_10
+
+#define BUTTON2_GPIO_PORT GPIO_A
+#define BUTTON2_GPIO_PIN GPIO_PIN_8
 
 
 void platform_button_setup()
 {
-    gpio_set_output(BUTTON_GPIO_PORT, BUTTON_GPIO_PIN);
+    gpio_set_output(BUTTON1_GPIO_PORT, BUTTON1_GPIO_PIN);
 }
 
 uint32_t button_state()
 {
-    return gpio_pin_read(BUTTON_GPIO_PORT, BUTTON_GPIO_PIN);
+    return gpio_pin_read(BUTTON1_GPIO_PORT, BUTTON1_GPIO_PIN);
 }
 
