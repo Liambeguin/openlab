@@ -64,6 +64,11 @@ int main(void){
             printf("PWM_dummy task created successfully\n");
             break;
     }
+    printf("\e[2J Usage :\n"
+           "=======================================\n"
+           "  press \e[92mz\e[0m to augment and \e[92mx\e[0m to lower\n"
+           "  the ratio sent to the motors\n"
+           "========================================\n\n");
 
     // Start the scheduler
     platform_run();
@@ -87,7 +92,7 @@ void ppm_dummy_task(void *arg){
     (void) arg;
 
     leds_off(0xff);
-    leds_on(LED_0);
+    leds_on(LED_1);
 
     uart_set_rx_handler(uart_print, char_rx, NULL);
 
@@ -96,7 +101,7 @@ void ppm_dummy_task(void *arg){
     	printf("ratio : %f                    \r", ratio);
     	motors_ratio(ratio, ratio, ratio, ratio);
 
-    	vTaskDelay(configTICK_RATE_HZ/4);
+    	vTaskDelay(configTICK_RATE_HZ/2);
     }
 }
 
