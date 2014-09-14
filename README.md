@@ -3,7 +3,9 @@
 
 This repository is based on __HiKoB OpenLab__ software. For more information,
 please refer to their [wiki](htpps://github.com/hikob/openlab/wiki).
+
 ---
+
 # Boreas
 
 __Boreas__ is *Dronolab's* second, STM32 based, autopilot board. It runs the 
