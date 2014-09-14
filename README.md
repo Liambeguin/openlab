@@ -1,8 +1,17 @@
 # Home
 ![Dronolab](doc/dronolab_logo.png)
 
+__Dronolab__ is an expanding student club of the *École de technologie 
+supérieure* (ETS) located in downtown Montreal. The mission of the student 
+club is to maintain a multirortor (quadcopter) fully autonomous which performs
+aerial survey for civil applications. The design and improvement of such a 
+constant UAS involves the collaboration of several engineering fields including 
+software, electrical and mechanical. The ingenuity, creativity and contribution 
+of each program bring the team to achieve professional flights operations.
+Please visit our [website](http://dronolab.etsmtl.ca/) for more information.
+  
 This repository is based on __HiKoB OpenLab__ software. For more information,
-please refer to their [wiki](htpps://github.com/hikob/openlab/wiki).
+please refer to their [wiki](https://github.com/hikob/openlab/wiki).
 
 ---
 
