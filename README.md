@@ -1,5 +1,6 @@
 # Home
 ![Dronolab](doc/dronolab_logo.png)
+
 This repository is based on __HiKoB OpenLab__ software. For more information,
 please refer to their [wiki](htpps://github.com/hikob/openlab/wiki).
 ---
