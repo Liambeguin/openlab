@@ -1,18 +1,14 @@
-HiKoB openlabs git repository
+# Home
+![Dronolab](doc/dronolab_logo.png)
+This repository is based on __HiKoB OpenLab__ software. For more information,
+please refer to their [wiki](htpps://github.com/hikob/openlab/wiki).
+---
+# Boreas
 
-  The HiKoB software repository is commited to free software and
-  open source community applications for HiKoB wireless sensor
-  devices.
+__Boreas__ is *Dronolab's* second, STM32 based, autopilot board. It runs the 
+code used to stabilize the drone during flight and what ever else is needed 
+on board as long as it doesn't require too much power. It is built around a 
+STM32F4 MCU (Cortex-M4 core) and a FT2232 that allows you to program, debug 
+and power your platform be only using one USB mini cable.  
 
-  Software available in this repository are geared toward three
-  main directions:
-    - research and application prototyping
-    - education and wireless embedded system
-    - hobbying and experimentation with wireless sensors
-
-  Git clone and pull requests are welcome. Please feel free
-  to experiment and share our software repository.
-  Git pull requests can be asked for by using the github interface
-  available on https://github.com
-
-The HiKoB team 
+![boreas view 1](doc/boreas_view1.png)
