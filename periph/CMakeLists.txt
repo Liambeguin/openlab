@@ -2,6 +2,9 @@
 # ADD proper header
 #
 
+# Add VectorNav 
+add_library(vn200 vn200/vn200.c)
+target_link_libraries(vn200 platform)
 
 # Add the LIS302DL library
 add_library(lis302dl STATIC lis302dl/lis302dl)

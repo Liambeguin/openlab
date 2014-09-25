@@ -26,41 +26,36 @@
 #include "exti.h"
 #include "stm32f4xx/syscfg.h"
 
+#define RAW_RC_THROTTLE _channel[0].value
+#define RAW_RC_ROLL     _channel[1].value
+#define RAW_RC_PITCH    _channel[2].value
+#define RAW_RC_YAW      _channel[3].value
 
 
 typedef struct {
-	gpio_t 			port;
-	gpio_pin_t 		pin;
+	gpio_t		port;
+	gpio_pin_t 	pin;
 	syscfg_port_t 	syscfg_port;
 
-	uint32_t 		last_time;
-	uint32_t 		value;
+	uint32_t 	last_time;
+	uint32_t 	value;
 }channel_t;
 
 
 typedef struct {
 
-	struct{
-		float RC_FACTOR_THRUST;
-		float RC_FACTOR_ROLLPITCH;
-		float RC_FACTOR_YAW;
-	};
+	float throttle;
 
-	struct{
-		float throttle;
+	float roll;
+	float pitch;
+	float yaw;
 
-		float roll;
-		float pitch;
-		float yaw;
+	bool kill_switch;
+	bool manual_switch;
 
-		bool kill_switch;
-		bool manual_switch;
+	bool isAlive;
 
-		bool isAlive;
-
-		bool start_sequence;
-	};
-
+	bool start_sequence;
 }rc_t;
 
 rc_t drone_radioController;

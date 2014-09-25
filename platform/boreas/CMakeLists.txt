@@ -43,4 +43,5 @@ target_link_libraries(platform
 	rc
 	gx3
 	tlc59116
+	vn200
 	)

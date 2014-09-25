@@ -43,9 +43,9 @@ static void motors_setup();
 static void rc_setup();
 
 /** IMU setup **/
-#include "gx3.h"
-static void gx3_setup();
-#define GX3_BAUDRATE	230400
+#include "vn200.h"
+static void vn200_setup();
+#define VN200_BAUDRATE	460800
 
 /** LED DRIVER setup **/
 #include "tlc59116.h"
@@ -53,13 +53,17 @@ static void led_driver_setup();
 // All Call Address
 #define LED_DRIVER_ADDRESS 0xD0
 
+/** TODO DataLink setup **/
+static void datalink_setup();
+
 
 void platform_periph_setup()
 {
+	datalink_setup();
 	motors_setup();
 	rc_setup();
  	led_driver_setup();
-//	gx3_setup();
+	vn200_setup();
 }
 
 static void led_driver_setup(){
@@ -72,34 +76,34 @@ static void led_driver_setup(){
 static void motors_setup(){
 
 	_motor_t motors[] = {
-			{
-					.timer 		= TIM_1,
-					.channel	= TIMER_CHANNEL_1,
-					.alternate 	= GPIO_AF_1,
-					.port 		= GPIO_E,
-					.pin 		= GPIO_PIN_9
-			},
-			{
-					.timer 		= TIM_1,
-					.channel	= TIMER_CHANNEL_2,
-					.alternate 	= GPIO_AF_1,
-					.port 		= GPIO_E,
-					.pin 		= GPIO_PIN_11
-			},
-			{
-					.timer 		= TIM_1,
-					.channel	= TIMER_CHANNEL_3,
-					.alternate 	= GPIO_AF_1,
-					.port 		= GPIO_E,
-					.pin 		= GPIO_PIN_13
-			},
-			{
-					.timer 		= TIM_1,
-					.channel	= TIMER_CHANNEL_4,
-					.alternate 	= GPIO_AF_1,
-					.port 		= GPIO_E,
-					.pin 		= GPIO_PIN_14
-			}
+		{
+			.timer 		= TIM_1,
+			.channel	= TIMER_CHANNEL_1,
+			.alternate 	= GPIO_AF_1,
+			.port 		= GPIO_E,
+			.pin 		= GPIO_PIN_9
+		},
+		{
+			.timer 		= TIM_1,
+			.channel	= TIMER_CHANNEL_2,
+			.alternate 	= GPIO_AF_1,
+			.port 		= GPIO_E,
+			.pin 		= GPIO_PIN_11
+		},
+		{
+			.timer 		= TIM_1,
+			.channel	= TIMER_CHANNEL_3,
+			.alternate 	= GPIO_AF_1,
+			.port 		= GPIO_E,
+			.pin 		= GPIO_PIN_13
+		},
+		{
+			.timer 		= TIM_1,
+			.channel	= TIMER_CHANNEL_4,
+			.alternate 	= GPIO_AF_1,
+			.port 		= GPIO_E,
+			.pin 		= GPIO_PIN_14
+		}
 
 	};
 
@@ -126,78 +130,96 @@ static void motors_setup(){
 static void rc_setup(){
 
 	channel_t channels[] = {
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_14,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_13,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_12,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_11,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_12,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_10,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-			{
-					.port = GPIO_D,
-					.pin = GPIO_PIN_9,
-					.syscfg_port = SYSCFG_PORT_D,
-					.last_time = 0,
-					.value = 0,
-			},
-//			{
-//					.port = GPIO_D,
-//					.pin = GPIO_PIN_8,
-//					.syscfg_port = SYSCFG_PORT_D,
-//					.last_time = 0,
-//					.value = 0,
-//			},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_14,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_13,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_12,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_11,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_12,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_10,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_9,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
+		{
+			.port = GPIO_D,
+			.pin = GPIO_PIN_8,
+			.syscfg_port = SYSCFG_PORT_D,
+			.last_time = 0,
+			.value = 0,
+		},
 
 	};
 
 	rc_config_channel(TIM_2, channels);
 }
 
-static void gx3_setup(){
+/* DataLink connected to U1 */
+static void datalink_setup(){
 
 	// Enable the uart
-	gpio_set_uart_tx(GPIO_D, GPIO_PIN_8);
-	gpio_set_uart_rx(GPIO_D, GPIO_PIN_9);
+	gpio_set_uart_tx(GPIO_C, GPIO_PIN_10);
+	gpio_set_uart_rx(GPIO_C, GPIO_PIN_11);
 
-	uart_enable(UART_3, GX3_BAUDRATE);
-
-	//initializing GX3 communication
-	GX3_init(UART_3);
+	uart_enable(UART_3, 115200);
 }
 
+/* VN200 on RS232-1 */
+static void vn200_setup() {
 
+	// Enable the uart
+	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
+	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
+
+	uart_enable(UART_4, VN200_BAUDRATE);
+
+	vn200_init(UART_4);
+	vn200_getModel();
+
+//TODO : add something like this for each part of the boot !! 
+//
+// 	if (vn200_getModel() == /* expected stuff */){
+// 		bootprint_success("IMU"); // should do : [ OK ] IMU
+// 		return EXIT_SUCCESS;
+// 	}else{
+// 		bootprint_failure("IMU"); //should do : [ FAIL ] IMU maybe give func name 
+// 	}
+}

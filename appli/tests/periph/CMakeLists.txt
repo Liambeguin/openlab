@@ -47,6 +47,9 @@ if(${PLATFORM_HAS_GX3})
 	target_link_libraries(test_periph_gx3 platform )
 endif(${PLATFORM_HAS_GX3})
 
+# TODO : add condition around this block 
+add_executable (test_periph_vn200 vn200.c)
+target_link_libraries (test_periph_vn200 platform)
 
 # Adding LIS302DL test
 if(${PLATFORM_HAS_LIS302DL})

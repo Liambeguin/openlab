@@ -34,14 +34,25 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define TASK_RC_PERIOD				(configTICK_RATE_HZ*10/1000)	// 10 ms
+#define TASK_RC_PERIOD		(configTICK_RATE_HZ*10/1000) // 10 ms
+
+#define RC_FACTOR_THRUST	1.25f //
+#define RC_FACTOR_ROLLPITCH	0.52f // 30 degrés
+#define RC_FACTOR_YAW 		3     //
 
 
 //Start sequence on radio controller (down-left on two joysticks)
-#define START_SEQUENCE		(drone_radioController.throttle <=  0.1f	&& \
-							 drone_radioController.yaw		<= -2.0f 	&& \
-							 drone_radioController.pitch	>=  0.4f	&& \
-							 drone_radioController.roll 	<= -0.3f  	)
+#define START_SEQUENCE		(drone_radioController.throttle <=  0.1f && \
+				 drone_radioController.yaw	<= -2.0f && \
+				 drone_radioController.pitch	>=  0.4f && \
+				 drone_radioController.roll 	<= -0.3f )
+
+// TODO : this second START_SEQUENCE should be independent, to be tested... 
+// #define START_SEQUENCE_2	(get_power(RAW_RC_THROTTLE)	<=  0.1f && \
+// 				 get_rad(RAW_RC_YAW)		<= -0.9f && \
+// 				 get_rad(RAW_RC_PITCH)		<= -0.9f && \
+// 				 get_rad(RAW_RC_ROLL)		<= -0.9f )
+
 
 
 
@@ -70,9 +81,9 @@ void rc_config_channel(timer_t timer, channel_t *channels){
 	nvic_irq_line_t nvic_line;
 
 
-	drone_radioController.RC_FACTOR_THRUST		= 1.25f; //
-	drone_radioController.RC_FACTOR_ROLLPITCH	= 0.52f; // 30 degrés
-	drone_radioController.RC_FACTOR_YAW 		= 3;     //
+//	drone_radioController.RC_FACTOR_THRUST		= 1.25f; //
+//	drone_radioController.RC_FACTOR_ROLLPITCH	= 0.52f; // 30 degrés
+//	drone_radioController.RC_FACTOR_YAW 		= 3;     //
 
 
 	uint32_t i;
@@ -179,11 +190,11 @@ void rc_print_channel_values(){
 
 // Convert on  [0; 1] scale
 float get_power(uint32_t channel_value){
-	return 1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f;
+	return 1000.0f * (float)channel_value / (float)timer_get_frequency(_timer) - 1.0f;
 }
 // Convert on [-1; 1] scale
 float get_rad  (uint32_t channel_value){
-	return (1000.0f*(float)channel_value/(float)timer_get_frequency(_timer)-1.0f)*2.0f-1.0f;
+	return (1000.0f * (float)channel_value / (float)timer_get_frequency(_timer) - 1.0f) * 2.0f - 1.0f;
 }
 
 
@@ -194,17 +205,17 @@ void rc_periodical(void *arg){
 
 	static uint32_t last_timer_time = 0;
 
-	drone_radioController.throttle 	= ( get_power(_channel[0].value) *drone_radioController.RC_FACTOR_THRUST) - 0.15f;
+	drone_radioController.throttle 	= (get_power(_channel[0].value) * RC_FACTOR_THRUST) - 0.15f;
 
 	drone_radioController.isAlive	= true;
 
-	drone_radioController.roll 		= get_rad(_channel[1].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
-	drone_radioController.pitch 	= get_rad(_channel[2].value) * drone_radioController.RC_FACTOR_ROLLPITCH;
-	drone_radioController.yaw 		= get_rad(_channel[3].value) * drone_radioController.RC_FACTOR_YAW;
+	drone_radioController.roll 	= get_rad(_channel[1].value) * RC_FACTOR_ROLLPITCH;
+	drone_radioController.pitch 	= get_rad(_channel[2].value) * RC_FACTOR_ROLLPITCH;
+	drone_radioController.yaw 	= get_rad(_channel[3].value) * RC_FACTOR_YAW;
 
 
-	drone_radioController.kill_switch	= (get_power(_channel[4].value)<0.5f)? true:false ;
-	drone_radioController.manual_switch = (get_power(_channel[5].value)<0.5f)? true:false ;
+	drone_radioController.kill_switch   = (get_power(_channel[4].value) < 0.5f) ? true : false;
+	drone_radioController.manual_switch = (get_power(_channel[5].value) < 0.5f) ? true : false;
 
 
 	if (START_SEQUENCE){
@@ -212,15 +223,9 @@ void rc_periodical(void *arg){
 		last_timer_time = soft_timer_time();
 		drone_radioController.start_sequence = 1;
 	}
-	else if (soft_timer_time()-last_timer_time >= 500)
+	else if (soft_timer_time() - last_timer_time >= 500)
 		drone_radioController.start_sequence = 0;
-
 
 	vTaskDelay(TASK_RC_PERIOD);
 	}
 }
-
-
-
-
-
