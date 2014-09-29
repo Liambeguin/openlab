@@ -60,7 +60,7 @@ typedef struct {
 
 rc_t drone_radioController;
 
-void rc_config_channel(timer_t timer, channel_t *channels);
+uint8_t rc_config_channel(timer_t timer, channel_t *channels);
 void rc_print_channel_values();
 // Convert on  [0; 1] scale
 float get_power(uint32_t channel_value);

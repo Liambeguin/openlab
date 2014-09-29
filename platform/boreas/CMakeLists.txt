@@ -44,4 +44,5 @@ target_link_libraries(platform
 	gx3
 	tlc59116
 	vn200
+	datalink
 	)

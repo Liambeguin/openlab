@@ -61,7 +61,7 @@ typedef struct{
 #define		RGB_YELLOW	(tlc59116_color_t){.red = 255, .green = 255, .blue = 0}
 
 void tlc59116_config(i2c_t i2c, uint8_t addr);
-void tlc59116_init();
+uint8_t tlc59116_init();
 
 void tlc59116_get_led_color(tlc59116_led_t led);
 //void tlc59116_get_led_color(tlc59116_led_t led, tlc59116_color_t *color)

@@ -37,7 +37,7 @@ void tlc59116_config(i2c_t i2c, uint8_t addr){
 }
 
 
-void tlc59116_init(){
+uint8_t tlc59116_init(){
 
 	uint8_t tx_buf[10] 	= {0};
 	uint8_t rx_buf[4] 	= {0};
@@ -48,12 +48,6 @@ void tlc59116_init(){
 	tx_buf[1] = 0x01;	// MODE1 value
 	tx_buf[2] = 0x00;	// MODE2 value
 	i2c_tx(_led_driver.i2c, _led_driver.addr, tx_buf, 3);
-
-	// Read MODE1 and MODE2
-//	read_addr = TLC59116_REG_MODE1 | TLC59116_CTRL_AUTO_INC;
-//	i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr, 1, rx_buf, 2);
-//	log_not_implemented("MODE1 : [0x%02x]\tMODE2 : [0x%02x]", rx_buf[0], rx_buf[1]);
-
 
 	//setting LED output state
 	tx_buf[0] = TLC59116_REG_LEDOUT0 | TLC59116_CTRL_AUTO_INC;
@@ -67,18 +61,16 @@ void tlc59116_init(){
 	tlc59116_set_led_color(TLC59116_LED0, RGB_BLUE);
 
 	read_addr = TLC59116_REG_EFLAG1 | TLC59116_CTRL_AUTO_INC;
-	i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr, 1, rx_buf, 2);
-	if(rx_buf[0] || rx_buf[1]){
-		log_error("[LED] ERROR");
-	}
-	else
-		log_info("[LED] TLC59116 OK !!");
+	if(i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr,1,rx_buf,2))
+		return 1; /* error */
 
 	tlc59116_set_led_color(TLC59116_LED0, RGB_OFF);
 	tlc59116_set_led_color(TLC59116_LED1, RGB_OFF);
 	tlc59116_set_led_color(TLC59116_LED2, RGB_OFF);
 	tlc59116_set_led_color(TLC59116_LED3, RGB_OFF);
 	tlc59116_set_led_color(TLC59116_LED4, RGB_OFF);
+
+	return 0; 
 }
 
 void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){
@@ -125,7 +117,7 @@ void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){
 		printf("%s is  OFF  \n", name);
 	else
 	printf("%s is \x1b[48;5;%dm     \x1B[48;0m  \n", name,
-			(16 + (rx_buf[0]/51 * 36) + (rx_buf[1]/51 * 6) + rx_buf[2]/51));
+		(16 + (rx_buf[0]/51 * 36) + (rx_buf[1]/51 * 6) + rx_buf[2]/51));
 
 
 }

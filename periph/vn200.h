@@ -1,4 +1,4 @@
 #include "uart.h"
 
 void vn200_init(uart_t uart);
-void vn200_getModel (void); 
+uint8_t vn200_getModel (void); 

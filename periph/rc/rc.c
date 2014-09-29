@@ -74,7 +74,7 @@ void generic_exti_handler(void *arg){
 	}
 }
 
-void rc_config_channel(timer_t timer, channel_t *channels){
+uint8_t rc_config_channel(timer_t timer, channel_t *channels){
 
 	_timer = timer;
 	exti_line_t exti_line;
@@ -170,11 +170,12 @@ void rc_config_channel(timer_t timer, channel_t *channels){
 			exti_enable_interrupt_line(exti_line, EXTI_TRIGGER_BOTH);
 			syscfg_select_exti_pin(exti_line, _channel[i].syscfg_port);
 			nvic_enable_interrupt_line(nvic_line);
-		}
+		}else
+			return 1; 
+
 	}
 
-	log_debug("[RC] span : %d", 0);
-	log_debug("[RC] config OK !");
+	return 0; 
 }
 
 

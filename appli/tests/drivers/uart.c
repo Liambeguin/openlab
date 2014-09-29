@@ -39,8 +39,8 @@ int main()
     platform_init();
 
     // Set initial values
-    leds_on(LED_0);
-    leds_off(LED_1);
+    leds_off(0x00);
+    leds_on(0x01);
 
     // Set the input char callback
     uart_set_rx_handler(uart_print, char_rx, NULL);
@@ -56,7 +56,7 @@ int main()
         }
 
         // Toggle the LEDs
-        leds_toggle(LED_0 + LED_1);
+        leds_toggle(0x00 + 0x01);
 
         // Print the message
         printf("Hello, World\t#%x\n", count--);

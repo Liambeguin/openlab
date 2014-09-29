@@ -38,11 +38,7 @@
 static void gpio_drivers_setup();
 
 /** UART Section **/
-//#define UART1_EXTERNAL_BAUDRATE		500000
 #define UART1_PRINT_BAUDRATE	115200	
-//#define UART3_GX3_BAUDRATE 			  230400
-#define UART4_EXTERNAL_BAUDRATE		500000
-//#define UART5_EXTERNAL_BAUDRATE		500000
 static void uart_drivers_setup();
 
 /** TIMER Section **/
@@ -66,7 +62,7 @@ void platform_drivers_setup()
 	timer_drivers_setup();
 
 	i2c_drivers_setup();
-//	spi_drivers_setup();
+	spi_drivers_setup();
 }
 
 static void i2c_drivers_setup(){
@@ -124,7 +120,6 @@ static void gpio_drivers_setup()
 
 /* UART declaration */
 uart_t uart_print = UART_1;
-uart_t uart_external = UART_4;
 static void uart_drivers_setup()
 {
 	/** Enable print UART1 **/
@@ -134,17 +129,6 @@ static void uart_drivers_setup()
 
 	/** Enable RS232 UARTs **/
 	// NOTE : GX3 uart must be set up in <platform>_periph.c
-
-
-	// Enable external UART4
-	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
-	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
-	uart_enable(UART_4, UART4_EXTERNAL_BAUDRATE);
-
-//	// Enable external UART5
-//	gpio_set_uart_tx(GPIO_C, GPIO_PIN_12);
-//	gpio_set_uart_rx(GPIO_D, GPIO_PIN_2);0
-//	uart_enable(UART_5, UART5_EXTERNAL_BAUDRATE);
 }
 //print
 void usart1_isr()

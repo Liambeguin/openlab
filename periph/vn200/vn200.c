@@ -26,10 +26,13 @@ void vn200_send_request(uint8_t const *request, uint8_t size)
 	uart_transfer(_vn200_uart, request, size);
 }
 
-void vn200_getModel (void) {
+uint8_t vn200_getModel (void) {
 
 	uint8_t request[] ={'$','V','N','R','R','G',',','0','1','*','X','X','\n'}; 
 	vn200_send_request (request, 13);
+	
+	/* return failure since it's not done yet */ 
+	return 1;
 }
 
 // static void vn200_reset(void) {}

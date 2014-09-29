@@ -2,6 +2,10 @@
 # ADD proper header
 #
 
+# Add DataLink
+add_library (datalink datalink/datalink.c)
+target_link_libraries (datalink platform)
+
 # Add VectorNav 
 add_library(vn200 vn200/vn200.c)
 target_link_libraries(vn200 platform)

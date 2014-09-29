@@ -46,23 +46,25 @@ uint16_t _value_0, _value_100, _span;
 
 void motors_config(_motor_t *motors){
 
-	log_info("[MOTORS] initializing motors ...");
+//	log_info("[MOTORS] initializing motors ...");
 
 
 	/** Setting up constants linked to the motors **/
 	drone_motors.MOTOR_SPEED_MAX	= 750.00f;
-	drone_motors.IDLE_POURC_ESC		=   0.06f;
+	drone_motors.IDLE_POURC_ESC	=   0.06f;
 
 	drone_motors.PHYSICS_B	= 0.00001418713138124377f;
 	drone_motors.PHYSICS_D	= 0.00000184f;
 
-	drone_motors.U1_MAX	 	= (4.0f * drone_motors.MOTOR_SPEED_MAX * drone_motors.MOTOR_SPEED_MAX * drone_motors.PHYSICS_B);
+	drone_motors.U1_MAX	= (4.0f * drone_motors.MOTOR_SPEED_MAX
+					* drone_motors.MOTOR_SPEED_MAX
+					* drone_motors.PHYSICS_B);
 	drone_motors.BIAS_U2	= 0.0f;
 	drone_motors.BIAS_U3	= 0.0f;
 	drone_motors.BIAS_U4	= 0.0f;
 	drone_motors.BIAS_ROLL	= 0.0f;
 	drone_motors.BIAS_PITCH	= 0.0f;
-	/** 			*** 						**/
+	/** 			*** 			**/
 
 	uint16_t timer_arr;
 
@@ -73,14 +75,16 @@ void motors_config(_motor_t *motors){
 	// Configure the General Purpose Timers
 	timer_enable(motors[0].timer);
 
-	//setting timer limits only doing it once because it's the same timer for all motors
+	//setting timer limits only once because it's the same timer for all motors
 	timer_arr 	= (2.5/1000)*timer_get_frequency(motors[0].timer);
 	_value_0 	= (1.0/1000)*timer_get_frequency(motors[0].timer);
 	_value_100 	= (2.0/1000)*timer_get_frequency(motors[0].timer);
 	_span 		= _value_100 - _value_0;
-
-	log_info("[MOTORS] timer_frequency : %d Hz\t end count : 0x%04x", timer_get_frequency(motors[0].timer), timer_arr);
-	log_info("\t 0   %% : 0x%04x \n\t 100 %% : 0x%04x \n\t Span  : %d values", _value_0, _value_100, _value_100-_value_0);
+//	log_info("[MOTORS] timer_frequency : %d Hz\t end count : 0x%04x",
+//	log_info("[MOTORS] timer_frequency : %d Hz\t end count : 0x%04x",
+//			timer_get_frequency(motors[0].timer), timer_arr);
+//	log_info("\t 0   %% : 0x%04x \n\t 100 %% : 0x%04x \n\t Span  : %d values",
+//			_value_0, _value_100, _value_100-_value_0);
 
 
 
@@ -91,15 +95,17 @@ void motors_config(_motor_t *motors){
 	timer_start(motors[0].timer, timer_arr, NULL, NULL, TIMER_MODE_CLOCK);
 
 	for(i=0; i<sizeof(_motors)/sizeof(_motors[0]); i++){
-		timer_set_channel_compare(motors[i].timer, motors[i].channel, 0, NULL, NULL);
-		timer_activate_channel_output(motors[i].timer, motors[i].channel, TIMER_OUTPUT_MODE_PWM1);
+		timer_set_channel_compare(motors[i].timer, motors[i].channel,
+						0, NULL, NULL);
+		timer_activate_channel_output(motors[i].timer,
+				motors[i].channel, TIMER_OUTPUT_MODE_PWM1);
 	}
-	log_info("[MOTORS] initialized !!");
+//	log_info("[MOTORS] initialized !!");
 }
 
 void ppm_update(_motor_t motor, float ratio){
 
-	if (ratio < 0.0f || ratio > 1.0f){
+if (ratio < 0.0f || ratio > 1.0f){
 		log_error("PPM Value out of range");
 		return;
 	}
