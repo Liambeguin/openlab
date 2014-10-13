@@ -21,6 +21,7 @@
 
 #include "boreas.h"
 #include "debug.h"
+#include "boot_log.h"
 
 #include "rcc.h"
 #include "nvic_.h"
@@ -38,7 +39,9 @@
 static void gpio_drivers_setup();
 
 /** UART Section **/
-#define UART1_PRINT_BAUDRATE	115200	
+#define UART1_PRINT_BAUDRATE	115200
+#define VN200_BAUDRATE		460800
+#define DATALINK_BAUDRATE	  9600
 static void uart_drivers_setup();
 
 /** TIMER Section **/
@@ -71,6 +74,7 @@ static void i2c_drivers_setup(){
 	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_10);
 	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_11);
 	i2c_enable(I2C_2, I2C_CLOCK_MODE_FAST);
+	boot_success("I2C_2 enabled\n");
 }
 
 void i2c1_ev_isr()
@@ -101,6 +105,7 @@ static void spi_drivers_setup()
 	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
 	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
 	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
+	boot_success("External SPI enabled at 4000000\n");
 
 }
 
@@ -120,37 +125,57 @@ static void gpio_drivers_setup()
 
 /* UART declaration */
 uart_t uart_print = UART_1;
+uart_t uart_external = UART_2;
 static void uart_drivers_setup()
 {
 	/** Enable print UART1 **/
 	gpio_set_uart_tx(GPIO_B, GPIO_PIN_6);
 	gpio_set_uart_rx(GPIO_B, GPIO_PIN_7);
 	uart_enable(UART_1, UART1_PRINT_BAUDRATE);
+	boot_success("Starting UART_1 at %d\n", UART1_PRINT_BAUDRATE);
+/* testing */
+	gpio_set_uart_tx(GPIO_A, GPIO_PIN_2);
+	gpio_set_uart_rx(GPIO_A, GPIO_PIN_3);
+	uart_enable(UART_2,VN200_BAUDRATE);
+	boot_success("Starting UART_2 at %d\n", VN200_BAUDRATE);
 
-	/** Enable RS232 UARTs **/
-	// NOTE : GX3 uart must be set up in <platform>_periph.c
+	gpio_set_uart_tx(GPIO_C, GPIO_PIN_10);
+	gpio_set_uart_rx(GPIO_C, GPIO_PIN_11);
+	uart_enable(UART_3, DATALINK_BAUDRATE);
+	boot_success("Starting UART_3 at %d\n", DATALINK_BAUDRATE);
+
+	
+	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
+	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
+	uart_enable(UART_4, VN200_BAUDRATE);
+	boot_success("Starting UART_4 at %d\n", VN200_BAUDRATE);
+
+	gpio_set_uart_tx(GPIO_C, GPIO_PIN_12);
+	gpio_set_uart_rx(GPIO_D, GPIO_PIN_2);
+	uart_enable(UART_5, VN200_BAUDRATE);
+	boot_success("Starting UART_5 at %d\n",VN200_BAUDRATE);
 }
 //print
 void usart1_isr()
 {
     uart_handle_interrupt(UART_1);
 }
-//print
+//
 void usart2_isr()
 {
     uart_handle_interrupt(UART_2);
 }
-//GX3
+//
 void usart3_isr()
 {
     uart_handle_interrupt(UART_3);
 }
-//EXT1
+//
 void uart4_isr()
 {
     uart_handle_interrupt(UART_4);
 }
-//EXT2
+//
 void uart5_isr()
 {
     uart_handle_interrupt(UART_5);
@@ -169,11 +194,14 @@ static void timer_drivers_setup()
     timer_select_internal_clock(TIM_1,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
                     - 1);
+  
+   boot_success("Starting TIM_1 at about 2MHz\n"); 
 
     // Setting Soft timer to about 32kHz
     timer_select_internal_clock(TIM_2,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)//32768)
                     - 1);
+   boot_success("Starting TIM_2 at about 32kHz\n"); 
 
     // Start ALL timers
     timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);

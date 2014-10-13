@@ -18,6 +18,7 @@
  *      Author: liam <liambeguin.at.gmail.com>
  */
 
+#include <string.h>
 #include "boreas.h"
 
 #include "spi.h"
@@ -46,7 +47,6 @@ static void rc_setup();
 /** IMU setup **/
 #include "vn200.h"
 static void vn200_setup();
-#define VN200_BAUDRATE	460800
 
 /** LED DRIVER setup **/
 #include "tlc59116.h"
@@ -58,11 +58,10 @@ static void led_driver_setup();
 /** DataLink setup **/
 #include "datalink.h"
 static void datalink_setup();
-#define DATALINK_BAUDRATE 9600
 
 void platform_periph_setup()
 {
-	datalink_setup();
+//	datalink_setup();
 	motors_setup();
 	rc_setup();
  	led_driver_setup();
@@ -198,7 +197,7 @@ static void rc_setup(){
 	};
 
 	if (rc_config_channel(TIM_2, channels))
-		boot_failure("RC (maybe exti or nvic problem \n");
+		boot_failure("RC maybe exti or nvic problem \n");
 	else
 		boot_success("RC configured \n");
 }
@@ -206,32 +205,42 @@ static void rc_setup(){
 /* DataLink connected to U1 */
 static void datalink_setup(){
 
-	// Enable the uart
-	gpio_set_uart_tx(GPIO_C, GPIO_PIN_10);
-	gpio_set_uart_rx(GPIO_C, GPIO_PIN_11);
-
-	uart_enable(UART_3, DATALINK_BAUDRATE);
-
 	datalink_config(UART_3);
 
+	uart_transfer(UART_3,(uint8_t*)"hello world!!\n", 15);
 	boot_success("DataLink initialized on U1\n");
 }
 
-/* VN200 on RS232-1 */
+/* VN200 on RS232-1, RS232-2 or UART_5 */
+#define VNPORT_RS232_2
 static void vn200_setup() {
 
-	// Enable the uart
-	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
-	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
+	uint8_t* ret;
 
-	uart_enable(UART_4, VN200_BAUDRATE);
+#if defined(VNPORT_RS232_1)
 
 	vn200_init(UART_4);
-	vn200_getModel();
+	boot_success("VN200 initializing on RS232-1... \n");
 
-	if (vn200_getModel()){
-		boot_failure("IMU \n");
+#elif defined(VNPORT_RS232_2)
+
+	vn200_init(UART_2);
+	boot_success("VN200 initializing on RS232-2... \n");
+
+#elif defined(VNPORT_U2)
+
+	vn200_init(UART_5);
+	boot_success("VN200 initializing on UART_5... \n");
+
+#else
+	boot_failure("VN200 bad port definition !\n");
+	return;
+#endif
+	ret = vn200_getModel();
+
+	if (!strcmp((char*)ret, "error")) {
+      		boot_failure("VN200 failed to getModel, sensor may not be connected ... \n");
 	}else{
-		boot_success("IMU initialized on RS232-1 \n");
+		boot_success("%s initialized !! \n", ret);
 	}
 }
