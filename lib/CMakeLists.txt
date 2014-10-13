@@ -65,15 +65,19 @@ include_directories(attitudeController attitudeController/roll attitudeControlle
 
 # Differential 
 add_library(differential STATIC 
-								differential/derivative.c 
-								differential/integrate.c )
+		differential/derivative.c 
+		differential/integrate.c )
 
 
 # attitudeController 
 add_library(att_ctrl STATIC 
-								attitudeController/attitudeController.c 
-								attitudeController/roll/roll.c 
-								attitudeController/pitch/pitch.c 
-								attitudeController/yaw/yaw.c )
+		attitudeController/attitudeController.c 
+		attitudeController/roll/roll.c 
+		attitudeController/pitch/pitch.c 
+		attitudeController/yaw/yaw.c )
 								
 target_link_libraries(att_ctrl differential)
+
+# Circular buffer 
+add_library (circular_buff STATIC
+		circularbuffer/circular_buff.c)

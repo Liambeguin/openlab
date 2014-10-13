@@ -24,7 +24,7 @@ target_link_libraries(rc platform)
 
 # Add the GX3 library
 include_directories(GX3 GX3/SCP)
-add_library(gx3 STATIC GX3/gx3 GX3/circular_buff)
+add_library(gx3 STATIC GX3/gx3 )#GX3/circular_buff)
 add_library(scp STATIC GX3/SCP/scp_parser GX3/SCP/util)
 target_link_libraries(gx3 scp platform)
 
