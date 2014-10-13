@@ -30,3 +30,7 @@
 
 # Build Directories
 /build*
+
+# Vim swap files 
+
+*.swp
