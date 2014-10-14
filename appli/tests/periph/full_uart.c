@@ -21,20 +21,16 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "printf.h"
 #define NO_DEBUG_HEADER
 #include "debug.h"
 
 #include "platform.h"
 
-
-uart_handler_t rx_handler(handler_arg_t arg, uint8_t c){
-	log_debug("%c", c);
-}
-
 int main(void){
 
-	signed portBASE_TYPE ret;
+rx_buffer = cb_init();
 
 	//init platform
 	platform_init();
@@ -44,21 +40,21 @@ int main(void){
     uint8_t count = 0;
 
 	printf("\n\n uart chain test task"
-			"\n -------------------\n");
+		"\n -------------------\n");
 
     uart_set_rx_handler(uart_external, rx_handler, NULL);
 
-    uint8_t test = 'a';
+    uint8_t test = '#';
 
 	while (1)
 	{
 		leds_off(0xFF);
 		leds_on(count++);
-//		uart_transfer(uart_external, &test, 1);
+		log_error("sending : %c\n", test);
+		uart_transfer(uart_external, &test, 1);
 
         int i;
-
-        for (i = 0; i < 0x800000; i++)
+        for (i = 0; i < 0x400000; i++)
         {
             __asm__("nop");
         }
