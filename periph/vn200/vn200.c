@@ -18,7 +18,12 @@ void vn200_decode(uint8_t c);
 
 void vn200_rxHandler(handler_arg_t arg, uint8_t c){
 
+/* toggle comments on the following lines to bypass circular buffer
+ * this needs to be tested it may be skipping stuff since we are in
+ * interrupt context
+ */
 	cb_write(&rx_buffer, &c);
+//	vn200_decode(c);
 }
 
 void vn200_init(uart_t uart) {
@@ -103,26 +108,28 @@ void vn200_readReg(vn200_regID_t regID){
 	vn200_sendRequest(request, sizeof(request));
 }
 
+/* TODO */
 void vn200_writeSettings(void) {}
 
 void vn200_decode(uint8_t c){
 
 	static parser_state_t state = waitingForMsg;
-	static uint8_t count = 0;
+	static uint8_t count = 0, regID = -1, chksum = 0;
 	static uint8_t parserBuffer[100] = {0};
 
-//	printf("[%c]",c);
 	switch (state){
 		case waitingForMsg :
 			if (c == '$'){
-				printf("got a message bro !!\n");
 				state = getAsciiHeader;
 				count = 0; memset(parserBuffer, '\0', 100);
+				chksum = 0;
+				regID = -1;
 			}else if (0 /* TODO this would be for binary header */){
 
 			}
 			break;
 		case getAsciiHeader :
+			chksum ^= c;
 			if (c != ',')
 				parserBuffer[count++] = c;
 			else {
@@ -130,9 +137,9 @@ void vn200_decode(uint8_t c){
 				if (!memcmp(parserBuffer, "VNRRG", 5)){
 					count = 0; memset(parserBuffer, '\0', 100);
 					state = getAsciiRegID;
-					printf("\n");
 				}else if (!memcmp(parserBuffer, "VNWRG", 5)){
 					/* Do we really need to do this ?! */
+					/* Maybe to check is write went OK... */
 					state = waitingForMsg;
 
 				}else if (!memcmp(parserBuffer, "VNERR", 5)){
@@ -143,33 +150,36 @@ void vn200_decode(uint8_t c){
 			}
 			break;
 		case getAsciiRegID :
+			chksum ^= c;
 			if (c != ','){
 				parserBuffer[count++] = c;
 			}else{
-				/* TODO process RegID */
+				regID = atoi((char*)parserBuffer);
 				count = 0; memset(parserBuffer, '\0', 100);
 				state = getAsciiData;
-				printf("\n");
 			}
 			break;
 		case getAsciiData :
 			if (c != '*'){
-				/* Process data */
-				printf("%c", c);
+				chksum ^= c;
+				parserBuffer[count++] = c;
 			}
 			else{
+				/* Processing data depending on regID */
+				vn200_processData(regID, parserBuffer);
 				count = 0; memset(parserBuffer, '\0', 100);
 				state = evaluateChkSum;
-				printf("\n");
 			}
 			break;
 		case evaluateChkSum :
 			if (count < 2){
-				count++;
+				parserBuffer[count++] = c;
 			}else{
+				if(chksum != strtol((char*)parserBuffer, NULL, 16))
+					log_error("chksum don't match !");
+
 				count = 0; memset(parserBuffer, '\0', 100);
 				state = waitingForMsg;
-				printf("\n");
 			}
 			break;
 		case processError :
@@ -181,7 +191,6 @@ void vn200_decode(uint8_t c){
 
 				/* Ignoring the CheckSum */
 				state = waitingForMsg;
-				printf("\n");
 			}
 			break;
 		default:

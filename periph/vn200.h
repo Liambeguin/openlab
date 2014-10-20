@@ -22,3 +22,10 @@ uint8_t* vn200_getModel (void);
 void vn200_decodeUartRx (void);
 void vn200_readReg(vn200_regID_t regID);
 void vn200_sendRequest(uint8_t const *request, uint8_t size);
+
+typedef struct {
+
+}vn200_t;
+
+/* VN200 Datastore*/
+vn200_t IMU; 
