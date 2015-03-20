@@ -69,7 +69,23 @@ typedef enum
     GPIO_PIN_12 = 12,
     GPIO_PIN_13 = 13,
     GPIO_PIN_14 = 14,
-    GPIO_PIN_15 = 15
+    GPIO_PIN_15 = 15,
+    GPIO_PIN_16 = 16,
+    GPIO_PIN_17 = 17,
+    GPIO_PIN_18 = 18,
+    GPIO_PIN_19 = 19,
+    GPIO_PIN_20 = 20,
+    GPIO_PIN_21 = 21,
+    GPIO_PIN_22 = 22,
+    GPIO_PIN_23 = 23,
+    GPIO_PIN_24 = 24,
+    GPIO_PIN_25 = 25,
+    GPIO_PIN_26 = 26,
+    GPIO_PIN_27 = 27,
+    GPIO_PIN_28 = 28,
+    GPIO_PIN_29 = 29,
+    GPIO_PIN_30 = 30,
+    GPIO_PIN_31 = 31
 } gpio_pin_t;
 
 /**
@@ -271,6 +287,9 @@ void gpio_set_i2c_scl(gpio_t gpio, gpio_pin_t pin);
  * \param alternate a number for timer selection, if relevant
  */
 void gpio_set_timer_output(gpio_t gpio, gpio_pin_t pin, uint32_t alternate);
+
+void gpio_set_can_rx(gpio_t gpio, gpio_pin_t pin);
+void gpio_set_can_tx(gpio_t gpio, gpio_pin_t pin);
 
 /**
  * @}

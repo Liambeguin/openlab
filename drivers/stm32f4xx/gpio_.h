@@ -48,14 +48,20 @@ typedef enum
 {
     GPIO_AF_0 = 0, // SYS
     GPIO_AF_1 = 1, // TIM 1/2
+    GPIO_AF_TIM1_TIM2 = 1,
     GPIO_AF_2 = 2, // TIM 3/4/5
+    GPIO_AF_TIM3_TIM4_TIM5 = 2,
     GPIO_AF_3 = 3, // TIM 8/9/10/11
+    GPIO_AF_TIM8_TIM9_TIM10_TIM11 = 3,
     GPIO_AF_4 = 4, // I2C 1/2/3
+    GPIO_AF_I2C1_I2C2_I2C3 = 4,
     GPIO_AF_5 = 5, // SPI 1/2 I2S 1/2
+    GPIO_AF_SPI1_SPI2_I2S1_I2S2 = 5,
     GPIO_AF_6 = 6, // SPI 3 I2S 3
     GPIO_AF_7 = 7, // USART 1/2/3
     GPIO_AF_8 = 8, // USART 4/5/6
     GPIO_AF_9 = 9, // CAN 1/2 TIM 12/13/14
+    GPIO_AF_CAN1_CAN2_TIM12_TIM13_TIM14 = 9,
     GPIO_AF_10 = 10, // OTG
     GPIO_AF_11 = 11, // ETH
     GPIO_AF_12 = 12, // FSMC SDIO

@@ -34,6 +34,7 @@
 #include "exti_.h"
 #include "exti.h"
 #include "i2c_.h"
+#include "can_.h"
 
 /** GPIO Section **/
 static void gpio_drivers_setup();
@@ -55,7 +56,8 @@ static void spi_drivers_setup();
 #define I2C1_CLOCK_MODE	I2C_CLOCK_MODE_FAST
 static void i2c_drivers_setup();
 
-
+static void can_drivers_setup();
+can_t can = CAN_2;
 
 
 void platform_drivers_setup()
@@ -66,6 +68,7 @@ void platform_drivers_setup()
 
 	i2c_drivers_setup();
 	spi_drivers_setup();
+	can_drivers_setup();
 }
 
 static void i2c_drivers_setup(){
@@ -225,6 +228,32 @@ void tim2_isr()
     timer_handle_interrupt(TIM_2);
 }
 
+static void can_drivers_setup()
+{
+    // Configure the CAN PB12/13
+    gpio_set_can_rx(GPIO_B, GPIO_PIN_12);
+    gpio_set_can_tx(GPIO_B, GPIO_PIN_13);
+
+    // Start it
+    can_enable(CAN_2, 1000000);
+}
+
+void can2_tx_isr()
+{
+    can_handle_tx_interrupt(CAN_2);
+}
+void can2_rx0_isr()
+{
+    can_handle_rx0_interrupt(CAN_2);
+}
+void can2_rx1_isr()
+{
+    can_handle_rx1_interrupt(CAN_2);
+}
+void can2_sce_isr()
+{
+    can_handle_sce_interrupt(CAN_2);
+}
 
 /** External interrupts for RC receiver**/
 void exti0_isr()

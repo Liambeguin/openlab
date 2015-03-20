@@ -28,6 +28,7 @@ if("${DRIVERS}" STREQUAL "stm32l1xx")
 		stm32/spi
 		stm32/i2c
 		stm32/uart
+		stm32/can
 		stm32/timer
 		stm32/dac
 		stm32/dma
@@ -60,6 +61,7 @@ elseif("${DRIVERS}" STREQUAL "stm32f1xx")
 		stm32/spi
 		stm32/i2c
 		stm32/uart
+		stm32/can
 		stm32/timer
 		stm32/dma
 		stm32/unique_id
@@ -79,7 +81,7 @@ elseif("${DRIVERS}" STREQUAL "stm32f1xx")
 		stm32f1xx/rtc
 		stm32f1xx/stm32f1xx
 	)
-	
+
 elseif("${DRIVERS}" STREQUAL "stm32f4xx")
 	include_directories(cortex-m3)
 	include_directories(stm32)
@@ -89,6 +91,7 @@ elseif("${DRIVERS}" STREQUAL "stm32f4xx")
 		cortex-m3/boot
 		cortex-m3/nvic
 		stm32/uart
+		stm32/can
 		stm32/timer
 		stm32/spi
 		stm32/i2c
@@ -109,10 +112,10 @@ elseif("${DRIVERS}" STREQUAL "stm32f4xx")
 		stm32f4xx/ethmac_descriptors
 		stm32f4xx/stm32f4xx
 	)
-	
+
  elseif("${DRIVERS}" STREQUAL "native")
  	include_directories(native)
- 
+
  	add_library(drivers_native STATIC
 		native/timer
 		native/timer

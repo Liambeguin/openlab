@@ -33,6 +33,7 @@
 #include "i2c_.h"
 #include "spi_.h"
 #include "dma_str.h"
+#include "can_.h"
 
 extern const _gpio_t _gpioA, _gpioB, _gpioC, _gpioD, _gpioE, _gpioF, _gpioG,
         _gpioH, _gpioI;
@@ -63,6 +64,7 @@ extern const _uart_t _uart1, _uart2, _uart3, _uart4, _uart5;
 #define UART_5 (&_uart5)
 
 extern const _timer_t _tim1, _tim2, _tim3, _tim4, _tim5, _tim6, _tim7, _tim8;
+extern const _timer_t _tim9, _tim10, _tim11, _tim12, _tim13, _tim14;
 #define TIM_1 (&_tim1)
 #define TIM_2 (&_tim2)
 #define TIM_3 (&_tim3)
@@ -71,11 +73,18 @@ extern const _timer_t _tim1, _tim2, _tim3, _tim4, _tim5, _tim6, _tim7, _tim8;
 #define TIM_6 (&_tim6)
 #define TIM_7 (&_tim7)
 #define TIM_8 (&_tim8)
+#define TIM_9 (&_tim9)
+#define TIM_10 (&_tim10)
+#define TIM_11 (&_tim11)
+#define TIM_12 (&_tim12)
+#define TIM_13 (&_tim13)
+#define TIM_14 (&_tim14)
 
 extern const _dma_t _dma1_str0, _dma1_str1, _dma1_str2, _dma1_str3, _dma1_str4,
         _dma1_str5, _dma1_str6, _dma1_str7;
 extern const _dma_t _dma2_str0, _dma2_str1, _dma2_str2, _dma2_str3, _dma2_str4,
         _dma2_str5, _dma2_str6, _dma2_str7;
+
 #define DMA1_STR0 (&_dma1_str0)
 #define DMA1_STR1 (&_dma1_str1)
 #define DMA1_STR2 (&_dma1_str2)
@@ -92,5 +101,8 @@ extern const _dma_t _dma2_str0, _dma2_str1, _dma2_str2, _dma2_str3, _dma2_str4,
 #define DMA2_STR5 (&_dma2_str5)
 #define DMA2_STR6 (&_dma2_str6)
 #define DMA2_STR7 (&_dma2_str7)
+
+extern const _can_t _can2;
+#define CAN_2 (&_can2)
 
 #endif /* STM32F4XX_H_ */

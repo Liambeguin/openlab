@@ -22,8 +22,14 @@ add_executable(test_leds leds)
 target_link_libraries(test_leds platform)
 
 if("${DRIVERS}" STREQUAL "stm32l1xx" OR "${DRIVERS}" STREQUAL "stm32f1xx" OR "${DRIVERS}" STREQUAL "stm32f4xx")
-add_executable(test_uart uart)
-target_link_libraries(test_uart platform)
+	add_executable(test_uart uart)
+	target_link_libraries(test_uart platform)
+
+	add_executable(test_can_rx can_rx)
+	target_link_libraries(test_can_rx platform)
+
+	add_executable(test_can_tx can_tx)
+	target_link_libraries(test_can_tx platform)
 endif("${DRIVERS}" STREQUAL "stm32l1xx" OR "${DRIVERS}" STREQUAL "stm32f1xx" OR "${DRIVERS}" STREQUAL "stm32f4xx")
 
 if(${PLATFORM_HAS_BUTTON})

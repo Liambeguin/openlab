@@ -232,3 +232,14 @@ void gpio_set_timer_output(gpio_t gpio, gpio_pin_t pin, uint32_t alternate)
     // Set alternate function
     gpio_set_alternate_function(gpio, pin, alternate);
 }
+
+void gpio_set_can_rx(gpio_t gpio, gpio_pin_t pin)
+{
+    // Just set alternate
+    gpio_set_alternate_function(gpio, pin, GPIO_AF_9);
+}
+void gpio_set_can_tx(gpio_t gpio, gpio_pin_t pin)
+{
+    // Just set alternate
+    gpio_set_alternate_function(gpio, pin, GPIO_AF_9);
+}
