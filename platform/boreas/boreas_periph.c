@@ -37,7 +37,7 @@ static void motors_setup();
 
 // PE12 - LEVEL SHIFTER ENABLE
 #define LEVELSHIFTER_EN_PORT	GPIO_E
-#define LEVELSHIFTER_EN_PIN	GPIO_PIN_12
+#define LEVELSHIFTER_EN_PIN	GPIO_PIN_10
 
 
 /** RC setup **/

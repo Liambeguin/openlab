@@ -188,6 +188,7 @@ static void timer_drivers_setup()
 {
     // Enable Motor timer
     timer_enable(TIM_1);
+    timer_enable(TIM_8);
 
     // Enable Soft timer
     timer_enable(TIM_2);
@@ -197,21 +198,31 @@ static void timer_drivers_setup()
     timer_select_internal_clock(TIM_1,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
                     - 1);
-  
-   boot_success("Starting TIM_1 at about 2MHz\n"); 
+
+   boot_success("Starting TIM_1 at about 2MHz\n");
+
+    // Setting servo timer to about 30Hz (2^5) = 32
+    // Setting Motor timer to about 2MHz (2^21) = 2097152
+    timer_select_internal_clock(TIM_8,
+            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
+                    - 1);
+
+   boot_success("Starting TIM_8 at about 30Hz\n");
 
     // Setting Soft timer to about 32kHz
     timer_select_internal_clock(TIM_2,
             (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)//32768)
                     - 1);
-   boot_success("Starting TIM_2 at about 32kHz\n"); 
+   boot_success("Starting TIM_2 at about 32kHz\n");
 
     // Start ALL timers
     timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
     timer_start(TIM_2, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
+    timer_start(TIM_8, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
 
 
     timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
+    timer_set_channel_compare(TIM_8, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
 }
 
 void tim1_up_tim10_isr()
@@ -226,6 +237,14 @@ void tim1_cc_isr()
 void tim2_isr()
 {
     timer_handle_interrupt(TIM_2);
+}
+void tim8_up_tim13_isr()
+{
+    timer_handle_interrupt(TIM_8);
+}
+void tim8_cc_isr()
+{
+    timer_handle_interrupt(TIM_8);
 }
 
 static void can_drivers_setup()

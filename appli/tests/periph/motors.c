@@ -74,13 +74,24 @@ int main(void){
     platform_run();
 }
 
+uint8_t exit=0;
 static void char_rx(handler_arg_t arg, uint8_t c){
 
-//	log_error("entered : %c", c);
-	if(c == 'z')
+//log_error("entered : 0x%x", c);
+	switch (c) {
+	case 'z':
 		ratio += 0.01;
-	if(c == 'x')
+		break;
+	case 'x':
 		ratio -= 0.01;
+		break;
+	case 0x03:
+		ratio = 0;
+		exit=1;
+		break;
+	default:
+		break;
+	}
 
 //	checking range of ratio
 	ratio = (ratio <= 0 ? 0 : (ratio >= 1 ? 1 : ratio));
@@ -101,8 +112,14 @@ void ppm_dummy_task(void *arg){
     	printf("ratio : %f                    \r", ratio);
     	motors_ratio(ratio, ratio, ratio, ratio);
 
+			if ( exit )
+				break;
+
     	vTaskDelay(configTICK_RATE_HZ/2);
     }
+
+		printf("\nExiting main loop...\n");
+		while(1);
 }
 
 
