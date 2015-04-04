@@ -38,6 +38,7 @@ target_link_libraries(platform
 	differential
 	att_ctrl
 	circular_buff
+	cli
 
 # Periph
 	motors

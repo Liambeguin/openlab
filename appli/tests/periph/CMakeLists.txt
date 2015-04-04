@@ -14,6 +14,10 @@
 add_executable(test_periph_void void.c)
 target_link_libraries(test_periph_void platform )
 
+# Adding cli test task
+add_executable(test_periph_cli cli.c)
+target_link_libraries(test_periph_cli platform )
+
 # Adding uart chain test
 add_executable(test_periph_uart_chain full_uart.c)
 target_link_libraries(test_periph_uart_chain platform)

@@ -81,3 +81,6 @@ target_link_libraries(att_ctrl differential)
 # Circular buffer 
 add_library (circular_buff STATIC
 		circularbuffer/circular_buff.c)
+
+# Command line Interface
+add_library(cli STATIC cli/cli cli/_commands)
