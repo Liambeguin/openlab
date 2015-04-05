@@ -64,7 +64,7 @@ void print_welcome (void) {
 }
 
 void print_usage (command_entry_t command) {
-	printf ("** Bad usage : \n  %s\n\n", command.usage);
+	printf ("%s\n\nUsage : \n%s\n\n", command.usage, command.help);
 }
 
 static uint8_t parse_line (char *line, char *argv[]) {

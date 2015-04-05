@@ -6,7 +6,7 @@
 // This generates the function prototypes
 #define MK_CMD(x) uint8_t do_ ## x (uint8_t argc, char * const argv[])
 // This constructs the command entry
-#define SHELL_CMD(name, usage, spacing, help) {#name,do_ ## name, usage, spacing, help}
+#define SHELL_CMD(name, usage, help) {#name,do_ ## name, usage, help}
 
 // function return code
 // 	* 0 all good
@@ -16,7 +16,6 @@ typedef struct {
 	const char *name;
 	uint8_t (*function) (uint8_t argc, char * const argv[]);
 	const char *usage;
-	const char *spacing;
 	const char *help;
 }command_entry_t;
 

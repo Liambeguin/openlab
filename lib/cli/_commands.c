@@ -11,20 +11,28 @@
 
 #define INPUT_MAX_ARGS 8
 command_entry_t commands[] = {
-	SHELL_CMD(help,			"help", " ............................ ", "Display this message"),
-	SHELL_CMD(version,	"version", " ......................... ", "Print shell version"),
-	SHELL_CMD(echo,			"echo [args...]", " .................. ", "Print text to screen"),
-	SHELL_CMD(leds,			"leds <mask> <on|off|toggle>", " ..... ", "Control GPIO leds"),
-	SHELL_CMD(rgb,			"rgb <id> <r> <g> <b>", " ............ ", "Control RGB  leds"),
+	SHELL_CMD(help, "help ............ Display this message", \
+"  help           - print brief description of all commands"),
+	SHELL_CMD(version, "version ......... Print shell version", "  version"),
+	SHELL_CMD(echo, "echo ............ echo args to console", \
+"  echo [args...]     - echo args to console"),
+	SHELL_CMD(leds,			"leds ............ Control GPIO leds", \
+"  leds mask <on|off|toggle>     - set leds depending on mask"),
+	SHELL_CMD(rgb, "rgb ............. Control RGB  leds", \
+"  rgb id red green blue     - set red, green, blue on id rgb LED\n\
+  rgb id color              - set id rgb LED to color. \n\
+                              color can be off, white, red, green, blue,\n\
+                              purple,orange,yellow"),
 	/* the following should always be at the end */
-	SHELL_CMD(not_found, "", "", ""),
+	SHELL_CMD(not_found, "", ""),
 };
 
 uint8_t do_help (uint8_t argc, char * const argv[]){
 	uint8_t i = 0;
+
 	printf ("\n USAGE                DESCRIPTION\n");
 	while ( strcmp(commands[i].name, "not_found")) {
-		printf ("%s%s%s\n", commands[i].usage, commands[i].spacing, commands[i].help);
+		printf ("%s\n", commands[i].usage);
 		i++;
 	}
 	return 0;
@@ -69,10 +77,30 @@ uint8_t do_rgb (uint8_t argc, char *const argv[]) {
 	if (argc == 5) {
 		tlc59116_color_t color = {atoi(argv[2]), atoi(argv[3]), atoi(argv[4])};
 		tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), color);
+	} else if (argc == 3) {
+		if (!strcmp(argv[2], "off"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_OFF);
+		else if (!strcmp(argv[2], "white"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_WHITE);
+		else if (!strcmp(argv[2], "red"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_RED);
+		else if (!strcmp(argv[2], "green"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_GREEN);
+		else if (!strcmp(argv[2], "blue"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_BLUE);
+		else if (!strcmp(argv[2], "purple"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_PURPLE);
+		else if (!strcmp(argv[2], "orange"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_ORANGE);
+		else if (!strcmp(argv[2], "yellow"))
+			tlc59116_set_led_color((tlc59116_led_t)atoi(argv[1]), RGB_YELLOW);
+		else {
+			printf (" ** Unsupported color %s **\n", argv[2]);
+			return 1;
+		}
+	} else {
+		return 1;
 	}
-	else if (argc == 3) {
-		
-}
 
 	return 0;
 
