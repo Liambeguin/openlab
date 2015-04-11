@@ -13,12 +13,12 @@ include_directories(
 add_library(platform STATIC
 	${PROJECT_SOURCE_DIR}/platform/platform
 	boreas
-	boreas_button
-	boreas_leds
-	boreas_drivers
-	boreas_periph
-	boreas_lib
-	boreas_net
+	button
+	leds
+	drivers
+	periph
+	lib
+	net
 	)
 
 # Allow for some more cyclic deps in libraries
