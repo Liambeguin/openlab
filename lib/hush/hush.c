@@ -23,7 +23,7 @@
 #define MAX_ARG_SIZE INPUT_MAX_SIZE/INPUT_MAX_ARGS
 #define PROMPT "#/ "
 #define isblank(c)     (c == ' ' || c == '\t')
-
+#define beep()				 printf("\a")
 /*commandline definitions*/
 char input_line[INPUT_MAX_SIZE];
 uint8_t input_buf_position = 0;
@@ -124,6 +124,12 @@ static void readline (handler_arg_t arg, uint8_t c) {
 
 		/* if almost full exit */
 		if (input_buf_position == INPUT_MAX_SIZE -1 && c != '\n'){
+			beep();
+			printf ("\n** Too long ! try again (max. %d) **", INPUT_MAX_SIZE);
+			input_line[input_buf_position] = '\0';
+			input_buf_position = 0;
+			printf("\n");
+			print_prompt();
 			return;
 		}
 
@@ -153,7 +159,7 @@ static void readline (handler_arg_t arg, uint8_t c) {
 				input_buf_position--;
 				printf ("\b \b");
 			} else {
-				printf("\a");
+				beep();
 			}
 			break;
 		case 0x03:
