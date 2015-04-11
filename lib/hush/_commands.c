@@ -1,5 +1,6 @@
 #include "platform.h"
 #include "printf.h"
+#include "nvic.h"
 #include "printf.h"
 #define NO_DEBUG_HEADER
 #include "debug.h"
@@ -23,6 +24,7 @@ cmd_entry_t commands[] = {
   rgb id color              - set id rgb LED to color. \n\
                               color can be off, white, red, green, blue,\n\
                               purple,orange,yellow"),
+  SHELL_CMD(reset,    "reset ........... Perform a system reset", "  reset"),
 	/* the following should always be at the end */
 	SHELL_CMD(not_found, NULL, NULL),
 };
@@ -129,6 +131,11 @@ uint8_t do_rgb (uint8_t argc, char *const argv[]) {
 
 	return 0;
 
+}
+
+uint8_t do_reset (uint8_t argc, char * const argv[]){
+
+	NVIC_RESET();
 }
 
 uint8_t do_not_found (uint8_t argc, char * const argv[]){

@@ -24,6 +24,7 @@ MK_CMD(echo);
 MK_CMD(help);
 MK_CMD(leds);
 MK_CMD(rgb);
+MK_CMD(reset);
 MK_CMD(not_found);
 
 extern cmd_entry_t commands[];
