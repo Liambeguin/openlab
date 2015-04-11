@@ -1,14 +1,14 @@
 /*
- * cli.c
+ * hush.c
  *
- *  Created on: 
- *      Author: 
+ *  Created on : %DATE%
+ * 		  Author : %AUTHOR%
  */
 
 #include "platform.h"
 #include "printf.h"
 #include "uart.h"
-#include "cli.h"
+#include "hush.h"
 #include "event.h"
 
 static void start (handler_arg_t arg){
@@ -28,7 +28,7 @@ int main()
 
 		event_post(EVENT_QUEUE_APPLI, start, NULL);
 
-    cli_init(uart_print);
+    hush_init(uart_print);
 
 		platform_run();
     return 0;

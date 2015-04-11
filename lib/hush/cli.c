@@ -1,18 +1,20 @@
 /*
- * cli.c
+ * hush.c
  *
  *  Created on : %DATE%
  * 		  Author : %AUTHOR%
  *
  * 		  Interesting sources of info:
  * 			 * http://fundamental-code.com/interp/
+ *
+ * 			hush stands for 'Hardly Usable SHell'
  */
 
 #include "uart.h"
 #include "soft_timer.h"
 #include "printf.h"
 #include "event.h"
-#include "cli.h"
+#include "hush.h"
 #include "_commands.h"
 #include <string.h>
 #define NO_DEBUG_HEADER
@@ -63,10 +65,6 @@ void print_welcome (void) {
 	print_prompt();
 }
 
-void print_usage (command_entry_t command) {
-	printf ("%s\n\nUsage : \n%s\n\n", command.usage, command.help);
-}
-
 static uint8_t parse_line (char *line, char *argv[]) {
 
 	uint8_t nargs = 0;
@@ -104,23 +102,16 @@ static void process_command (handler_arg_t arg){
 
 	uint8_t i = 0;
 	uint8_t nargs = 0;
+	cmd_entry_t *ret;
 	printf("\n");
 
 
 	nargs = parse_line(input_line, argument_list);
 
 	// Searching the right command and executing...
-	i = 0;
-	while (1) {
-		if ((!strcmp(argument_list[0], commands[i].name)) || !strcmp(commands[i].name, "not_found")){
-			if (commands[i].function(nargs, argument_list))
-				print_usage(commands[i]);
+	ret = find_cmd (argument_list[0]);
+	(ret->function)(nargs, argument_list);
 
-			break;
-		} else {
-			i++;
-		}
-	}
 	// flushing the argument buffer
 	memset(argument_list, '\0', sizeof(argument_list));
 
@@ -185,7 +176,7 @@ static void readline (handler_arg_t arg, uint8_t c) {
 	}
 }
 
-void cli_init (uart_t uart) {
+void hush_init (uart_t uart) {
 
 	uart_set_rx_handler(uart, readline, NULL);
 	event_post(EVENT_QUEUE_APPLI, (handler_t) print_welcome, NULL);

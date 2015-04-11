@@ -10,7 +10,7 @@
 #include "tlc59116.h"
 
 #define INPUT_MAX_ARGS 8
-command_entry_t commands[] = {
+cmd_entry_t commands[] = {
 	SHELL_CMD(help, "help ............ Display this message", \
 "  help           - print brief description of all commands"),
 	SHELL_CMD(version, "version ......... Print shell version", "  version"),
@@ -24,22 +24,47 @@ command_entry_t commands[] = {
                               color can be off, white, red, green, blue,\n\
                               purple,orange,yellow"),
 	/* the following should always be at the end */
-	SHELL_CMD(not_found, "", ""),
+	SHELL_CMD(not_found, NULL, NULL),
 };
 
-uint8_t do_help (uint8_t argc, char * const argv[]){
-	uint8_t i = 0;
+void print_usage (cmd_entry_t *command) {
+	if (command->usage != NULL && command->help != NULL)
+	  printf ("%s\n\nUsage : \n%s\n\n", command->usage, command->help);
+}
 
-	printf ("\n USAGE                DESCRIPTION\n");
-	while ( strcmp(commands[i].name, "not_found")) {
-		printf ("%s\n", commands[i].usage);
-		i++;
+cmd_entry_t *find_cmd (const char * command) {
+
+	uint8_t i = 0;
+	while (commands[i].usage != NULL) {
+		if (!strcmp(command, commands[i].name)) break ;
+		else i++;
+	}
+	return  &commands[i];
+}
+
+uint8_t do_help (uint8_t argc, char * const argv[]){
+
+	uint8_t i = 0;
+	cmd_entry_t *ret;
+
+	if (argc < 2) {
+		printf ("\n USAGE                DESCRIPTION\n");
+		while ( strcmp(commands[i].name, "not_found")) {
+			printf ("%s\n", commands[i].usage);
+			i++;
+		}
+	} else {
+		for (i=1; i<argc; i++) {
+			ret = find_cmd (argv[i]);
+			if (ret->usage != NULL) print_usage (ret);
+			else (ret->function)(argc, argv);
+		}
 	}
 	return 0;
 }
 
 uint8_t do_version (uint8_t argc, char * const argv[]){
-	printf("Dronolab Shell, Version 0.1.0\nLiam BEGUIN\n");
+	printf("Dronolab's hush Shell, Version 0.1.0\nLiam BEGUIN\n");
 	return 0;
 }
 

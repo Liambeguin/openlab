@@ -60,27 +60,27 @@ target_link_libraries(packet freertos)
 
 ###### Beginning of Dronolab
 
-																
+
 include_directories(attitudeController attitudeController/roll attitudeController/pitch attitudeController/yaw)
 
-# Differential 
-add_library(differential STATIC 
-		differential/derivative.c 
+# Differential
+add_library(differential STATIC
+		differential/derivative.c
 		differential/integrate.c )
 
 
-# attitudeController 
-add_library(att_ctrl STATIC 
-		attitudeController/attitudeController.c 
-		attitudeController/roll/roll.c 
-		attitudeController/pitch/pitch.c 
+# attitudeController
+add_library(att_ctrl STATIC
+		attitudeController/attitudeController.c
+		attitudeController/roll/roll.c
+		attitudeController/pitch/pitch.c
 		attitudeController/yaw/yaw.c )
-								
+
 target_link_libraries(att_ctrl differential)
 
-# Circular buffer 
+# Circular buffer
 add_library (circular_buff STATIC
 		circularbuffer/circular_buff.c)
 
 # Command line Interface
-add_library(cli STATIC cli/cli cli/_commands)
+add_library(hush STATIC hush/hush hush/_commands)

@@ -17,7 +17,7 @@ typedef struct {
 	uint8_t (*function) (uint8_t argc, char * const argv[]);
 	const char *usage;
 	const char *help;
-}command_entry_t;
+}cmd_entry_t;
 
 MK_CMD(version);
 MK_CMD(echo);
@@ -26,6 +26,8 @@ MK_CMD(leds);
 MK_CMD(rgb);
 MK_CMD(not_found);
 
-extern command_entry_t commands[];
+extern cmd_entry_t commands[];
+
+cmd_entry_t *find_cmd (const char * command);
 
 #endif /* _COMMANDS_H_ */
