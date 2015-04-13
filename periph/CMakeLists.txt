@@ -8,7 +8,7 @@ target_link_libraries (datalink platform)
 
 # Add VectorNav
 include_directories(vn200)
-add_library(vn200 STATIC vn200/vn200.c vn200/vn200_parser.c)
+add_library(vn200 STATIC vn200/vn200.c vn200/vn200_commands.c)
 target_link_libraries(vn200 platform)
 
 # Add the LIS302DL library
