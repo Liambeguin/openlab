@@ -222,8 +222,6 @@ static void datalink_setup(){
 #define VNPORT_RS232_2
 static void vn200_setup() {
 
-	uint8_t* ret;
-
 #if defined(VNPORT_RS232_1)
 
 	vn200_init(UART_4);
@@ -243,11 +241,4 @@ static void vn200_setup() {
 	boot_failure("VN200 bad port definition !\n");
 	return;
 #endif
-	ret = vn200_getModel();
-
-	if (!strcmp((char*)ret, "error")) {
-      		boot_failure("VN200 failed to getModel, sensor may not be connected ... \n");
-	}else{
-		boot_success("%s initialized !! \n", ret);
-	}
 }
