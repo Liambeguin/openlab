@@ -13,7 +13,7 @@ vn200_cmd_t vn200_cmds[] = {
 	{"$VNRRG", vn200_readReg },
 	{"$VNWRG", NULL},
 	{"$VNERR", vn200_processErr},
-	/* */ 
+	/* */
 	{NULL, NULL},
 };
 
@@ -31,14 +31,14 @@ uint8_t vn200_readReg (uint8_t argc, char * const argv[]){
 
 	switch (atoi(argv[1])) {
 		case 1:
-			printf ("[ %d ] %s initialized ! \n", 
+			printf ("[ %d ] %s initialized ! \n",
 					soft_timer_ticks_to_ms(soft_timer_time()), argv[2]);
 			break;
 		default:
-			log_error("reading reg%d : %s", atoi(argv[1]), argv[2]);
+			printf("reading reg%d : %s \n", atoi(argv[1]), argv[2]);
 			break;
 		}
-	return 0; 
+	return 0;
 }
 
 uint8_t vn200_processErr (uint8_t argc, char * const argv[]){

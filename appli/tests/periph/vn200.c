@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "printf.h"
 #include "debug.h"
+#include "soft_timer.h"
 
 #include "platform.h"
 
@@ -31,41 +32,9 @@
 
 #define ERROR_TEST 1
 
-void create_task(char* name, void* func, int param);
-
-void dummy(void){
-
-	while(1){
-		vn200_readReg(8);
-		vTaskDelay(configTICK_RATE_HZ/200);
-	}
-}
-
-void dumm2(){
-
-	uint8_t count = 0;
-	while (1){
-
-		vn200_decodeUartRx();
-		leds_off(0xFF);
-		leds_on(count++);
-//		vTaskDelay(configTICK_RATE_HZ/100);
-	}
-}
-
-int main()
+void vn_send(void *arg)
 {
-	// Initialize the platform
-	platform_init();
 
-	printf("VN200 Test Program\n");
-
-	// Set initial values
-	leds_off(0xff);
-	leds_on(0x01);
-
-
-	create_task("recvcmd", dumm2, configTICK_RATE_HZ/90);
 #if ERROR_TEST
 	/* Testing Error codes... 3:O Meuh! */
 
@@ -89,33 +58,41 @@ int main()
 	/*   ***   */
 #endif
 
-	vn200_readReg(USERTAG);
-	vn200_readReg(1);
-	vn200_readReg(2);
-	vn200_readReg(3);
-	vn200_readReg(4);
-	vn200_readReg(5);
+	vn200_getReg(USERTAG);
+	vn200_getReg(1);
+	vn200_getReg(2);
+	vn200_getReg(3);
+	vn200_getReg(4);
+	vn200_getReg(5);
 
-	create_task("sendcmd", dummy, configTICK_RATE_HZ);
+	while (1);
+}
+
+int main()
+{
+	signed portBASE_TYPE ret;
+	// Initialize the platform
+	platform_init();
+
+	printf("VN200 Test Program\n");
+
+	// Set initial values
+	leds_off(0xff);
+	leds_on(0x01);
+
+	ret = xTaskCreate(vn_send, (const signed char * const) "send_func",
+             configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	switch (ret) {
+  case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
+  	printf("Error: Could not allocate required memory\n");
+    while (1);
+    return 0;
+	default:
+    break;
+	}
 
 	// Start the scheduler
 	platform_run();
 
 	return 0;
-}
-
-
-void create_task(char* name, void* func, int param){
-	switch (xTaskCreate(func, (const signed char * const) name,
-				configMINIMAL_STACK_SIZE, (void*)param, 1, NULL))
-		{
-		case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
-			log_error("Could not allocate required memory to %s", name);
-			while (1);
-			break;
-
-		default:
-			log_debug("%s created successfully", name);
-			break;
-		}
 }
