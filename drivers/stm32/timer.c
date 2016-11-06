@@ -65,6 +65,17 @@ void timer_disable(openlab_timer_t timer)
 
     // Stop the clock in the RCC registers
     rcc_apb_disable(_timer->apb_bus, _timer->apb_bit);
+
+    // Clear frequency
+    _timer->data->frequency = 0;
+}
+
+void timer_set_isr_priority(openlab_timer_t timer, uint8_t priority)
+{
+	const _openlab_timer_t *_timer = timer;
+
+    // Update the interrupt priority in the NVIC
+    nvic_set_priority(_timer->irq_line, priority);
 }
 
 void timer_select_internal_clock(openlab_timer_t timer, uint16_t prescaler)
@@ -128,7 +139,8 @@ void timer_select_external_clock(openlab_timer_t timer, uint16_t prescaler)
 }
 
 void timer_start(openlab_timer_t timer, uint16_t update_value,
-                 timer_handler_t update_handler, handler_arg_t update_arg)
+		timer_handler_t update_handler, handler_arg_t update_arg,
+		timer_mode_t mode)
 {
     const _openlab_timer_t *_timer = timer;
 
@@ -150,6 +162,23 @@ void timer_start(openlab_timer_t timer, uint16_t update_value,
 
     // Set SMS bits
     *timer_get_SMCR(_timer) &= ~TIMER_SMCR__SMS_MASK;
+    if (mode == TIMER_MODE_ENCODER)
+    {
+        // Enable dual encoder mode
+        *timer_get_SMCR(_timer) |= TIMER_SMCR__SMS_ENCODER_MODE_3;
+
+        // Set channel 1 and 2 as input non inverted
+        *timer_get_CCMRx(timer, 1) = TIMER_CCMRx__CCxS__INPUT1 * 0x101;
+    }
+
+#if defined(TIM1_BASE_ADDRESS) && defined(TIM8_BASE_ADDRESS)
+    // If timer is TIM1 or TIM8, set the main output enable bit
+    if ((_timer->base_address == TIM1_BASE_ADDRESS) || (_timer->base_address
+                    == TIM8_BASE_ADDRESS))
+    {
+        *timer_get_BDTR(_timer) = TIMER_BDTR__MOE;
+    }
+#endif
 
     // Check if the interrupt should be enabled or disabled
     if (update_handler)
@@ -313,6 +342,12 @@ void timer_update_channel_compare(openlab_timer_t timer, timer_channel_t channel
 
     // Store the new compare match value
     *timer_get_CCRx(_timer, channel) = value;
+}
+
+uint16_t timer_get_channel_value(openlab_timer_t timer, timer_channel_t channel)
+{
+    const _openlab_timer_t *_timer = timer;
+    return *timer_get_CCRx(_timer, channel);
 }
 
 void timer_set_channel_capture(openlab_timer_t timer, timer_channel_t channel,
