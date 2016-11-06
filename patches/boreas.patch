@@ -1,0 +1,1143 @@
+diff --git a/platform/boreas/CMakeLists.txt b/platform/boreas/CMakeLists.txt
+new file mode 100755
+index 0000000..e80c3dd
+--- /dev/null
++++ b/platform/boreas/CMakeLists.txt
+@@ -0,0 +1,50 @@
++#
++# This file is part of DronolabSTM32-embedded.
++#
++
++
++# Include the STM32 drivers folder
++include_directories(
++	${PROJECT_SOURCE_DIR}/drivers/cortex-m3
++	${PROJECT_SOURCE_DIR}/drivers/stm32
++	${PROJECT_SOURCE_DIR}/drivers/stm32f4xx)
++
++# Add the platform library
++add_library(platform STATIC
++	${PROJECT_SOURCE_DIR}/platform/platform
++	boreas
++	button
++	leds
++	drivers
++	periph
++	lib
++	net
++	)
++
++# Allow for some more cyclic deps in libraries
++set_property(TARGET platform APPEND PROPERTY LINK_INTERFACE_MULTIPLICITY 3)
++
++# Link the library to the drivers and peripherals
++target_link_libraries(platform
++# Driver
++	drivers_stm32f4xx
++
++# Lib
++	freertos
++	random
++	printf
++	event
++	softtimer
++	differential
++	att_ctrl
++	circular_buff
++	hush
++
++# Periph
++	motors
++	rc
++	gx3
++	tlc59116
++	vn200
++	datalink
++	)
+diff --git a/platform/boreas/FreeRTOSConfig.h b/platform/boreas/FreeRTOSConfig.h
+new file mode 100644
+index 0000000..1c7a0da
+--- /dev/null
++++ b/platform/boreas/FreeRTOSConfig.h
+@@ -0,0 +1,96 @@
++/*
++ * This file is part of HiKoB Openlab.
++ *
++ * HiKoB Openlab is free software: you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public License
++ * as published by the Free Software Foundation, version 3.
++ *
++ * HiKoB Openlab is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with HiKoB Openlab. If not, see
++ * <http://www.gnu.org/licenses/>.
++ *
++ * Copyright (C) 2011,2012 HiKoB.
++ */
++
++/*
++ * FreeRTOSConfig.h
++ *
++ *  Created on: Jul 13, 2011
++ *      Author: Christophe Braillon <christophe.braillon.at.hikob.com>
++ */
++
++#ifndef FREERTOS_CONFIG_H
++#define FREERTOS_CONFIG_H
++
++/*-----------------------------------------------------------
++ * Application specific definitions.
++ *
++ * These definitions should be adjusted for your particular hardware and
++ * application requirements.
++ *
++ * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
++ * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
++ *
++ * See http://www.freertos.org/a00110.html.
++ *----------------------------------------------------------*/
++
++#define configUSE_PREEMPTION            1
++#define configUSE_IDLE_HOOK             1
++#define configUSE_TICK_HOOK             0
++#define configCPU_CLOCK_HZ              ((unsigned portLONG)72000000) // Clock setup from main.c in the demo application.
++#define configTICK_RATE_HZ              ((portTickType)1000)
++#define configMAX_PRIORITIES            ((unsigned portBASE_TYPE)8)
++#define configMINIMAL_STACK_SIZE        ((unsigned portSHORT)200) // Size in uint32_t (real stack size is multiplied by 4)
++#define configTOTAL_HEAP_SIZE           ((size_t)(24 * 1024)) // Size in bytes
++#define configMAX_TASK_NAME_LEN         (8)
++#define configUSE_TRACE_FACILITY        1
++#define configUSE_16_BIT_TICKS          0
++#define configIDLE_SHOULD_YIELD         0
++
++#define configUSE_MUTEXES               1
++#define configUSE_COUNTING_SEMAPHORES   1
++#define configQUEUE_REGISTRY_SIZE       0
++#define configGENERATE_RUN_TIME_STATS   0
++#define configCHECK_FOR_STACK_OVERFLOW  2 // Checking Stack Overflow!
++#define configUSE_RECURSIVE_MUTEXES     1
++#define configUSE_MALLOC_FAILED_HOOK    0
++#define configUSE_APPLICATION_TASK_TAG  0
++
++/* Co-routine definitions. */
++#define configUSE_CO_ROUTINES           0
++#define configMAX_CO_ROUTINE_PRIORITIES (2)
++
++/* Software timer definitions. */
++#define configUSE_TIMERS                0
++#define configTIMER_TASK_PRIORITY       (1)
++#define configTIMER_QUEUE_LENGTH        10
++#define configTIMER_TASK_STACK_DEPTH    (4 * configMINIMAL_STACK_SIZE)
++
++/* Set the following definitions to 1 to include the API function, or zero
++ to exclude the API function. */
++
++#define INCLUDE_vTaskPrioritySet        0
++#define INCLUDE_uxTaskPriorityGet       0
++#define INCLUDE_vTaskDelete             1
++#define INCLUDE_vTaskCleanUpResources   0
++#define INCLUDE_vTaskSuspend            1
++#define INCLUDE_vTaskDelayUntil         1
++#define INCLUDE_vTaskDelay              1
++
++/* Use the system definition, if there is one */
++#define configPRIO_BITS       4        /* 15 priority levels */
++
++#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY         15
++#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY    1
++
++/* The lowest priority. */
++#define configKERNEL_INTERRUPT_PRIORITY     ( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
++/* Priority 5, or 95 as only the top four bits are implemented. */
++#define configMAX_SYSCALL_INTERRUPT_PRIORITY    ( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
++
++#endif /* FREERTOS_CONFIG_H */
+diff --git a/platform/boreas/boreas.c b/platform/boreas/boreas.c
+new file mode 100644
+index 0000000..ae2efeb
+--- /dev/null
++++ b/platform/boreas/boreas.c
+@@ -0,0 +1,106 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * boreas.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "boreas.h"
++
++#include "watchdog.h"
++#include "cm3_scb_registers.h"
++#include "rcc.h"
++#include "flash.h"
++#include "uart_.h"
++#include "unique_id.h"
++#include "random.h"
++#include "soft_timer.h"
++#include "spi.h"
++#include "timer.h"
++#include "printf.h"
++#include "debug.h"
++
++__attribute__((weak)) int32_t platform_should_start_watchdog();
++
++void platform_init()
++{
++    // Enable watchdog if requested
++    if (platform_should_start_watchdog && platform_should_start_watchdog())
++    {
++        watchdog_enable(WATCHDOG_DIVIDER_256, 0xFFF);
++    }
++
++    // Enable floating point
++    *cm3_scb_get_CPACR() |= 0xF << 20;  /* set CP10 and CP11 Full Access */
++
++    // Enable syscfg
++    rcc_apb_enable(RCC_APB_BUS_SYSCFG, RCC_APB_BIT_SYSCFG);
++
++    // At reset, HCLK is 16MHz, set flash latency to 5 wait state to handle 168MHz
++    flash_set_latency(5);
++
++    // Configure PLL to have 336MHz VCO, then 48MHz for USB and 168 MHz for sysclk
++    rcc_pll_enable(RCC_PLL_SOURCE_HSI, 8, 168, RCC_PLL_MAIN_DIV_2, 7);
++
++    // Now SYSCLK is at 168MHz, set AHB divider to 1, APB1 to 4 and APB2 to 4
++    /*
++     *  The frequency of the AHB domain is 168 MHz.
++     *  The frequency of the APBx domain is 42 MHz.
++     */
++    rcc_sysclk_set_prescalers(RCC_SYSCLK_AHB_PRE_1, RCC_SYSCLK_APB_PRE_4,
++            RCC_SYSCLK_APB_PRE_4);
++
++    // Select PLL as SYSCLK source clock
++    rcc_sysclk_select_source(RCC_SYSCLK_SOURCE_PLL);
++
++    // Setup the drivers
++    platform_drivers_setup();
++
++    // Setup the LEDs
++    platform_leds_setup();
++
++    // Setup the libraries
++    platform_lib_setup();
++
++    // Setup the peripherals
++    platform_periph_setup();
++
++    // Setup the net stack
++    platform_net_setup();
++
++    // Feed the random number generator
++    random_init(uid->uid32[2]);
++
++    log_printf(
++            "HCLK @%uMHz, SYSTICK @%uMHz", rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_HCLK) / 1000000,
++            rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_SYSTICK_CLK) / 1000000);
++
++    log_printf("\n\nPlatform starting in ");
++    uint32_t i;
++
++    for (i = 1; i > 0; i--)
++    {
++        log_printf("%u... ", i);
++        soft_timer_delay_s(1);
++    }
++    log_printf("\nGO!\n");
++}
++
++void platform_start_freertos_tick(uint16_t frequency, handler_t handler,
++        handler_arg_t arg)
++{
++    // For now, until the RTC works, start the systick.
++    nvic_enable_systick(frequency, handler, arg);
++}
+diff --git a/platform/boreas/boreas.h b/platform/boreas/boreas.h
+new file mode 100644
+index 0000000..a55a665
+--- /dev/null
++++ b/platform/boreas/boreas.h
+@@ -0,0 +1,35 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * boreas.h
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef BOREAS_H_
++#define BOREAS_H_
++
++#include "platform.h"
++#include "stm32f4xx.h"
++
++void platform_drivers_setup();
++void platform_leds_setup();
++void platform_button_setup();
++
++void platform_periph_setup();
++void platform_lib_setup();
++void platform_net_setup();
++
++
++#endif /* BOREAS_H_ */
+diff --git a/platform/boreas/button.c b/platform/boreas/button.c
+new file mode 100644
+index 0000000..02bd843
+--- /dev/null
++++ b/platform/boreas/button.c
+@@ -0,0 +1,44 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++
++/*
++ * boreas_button.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++#include "platform.h"
++#include "boreas.h"
++
++#include "gpio_.h"
++
++#define BUTTON1_GPIO_PORT GPIO_A
++#define BUTTON1_GPIO_PIN GPIO_PIN_10
++
++#define BUTTON2_GPIO_PORT GPIO_A
++#define BUTTON2_GPIO_PIN GPIO_PIN_8
++
++
++void platform_button_setup()
++{
++    gpio_set_output(BUTTON1_GPIO_PORT, BUTTON1_GPIO_PIN);
++}
++
++uint32_t button_state()
++{
++    return gpio_pin_read(BUTTON1_GPIO_PORT, BUTTON1_GPIO_PIN);
++}
++
+diff --git a/platform/boreas/drivers.c b/platform/boreas/drivers.c
+new file mode 100644
+index 0000000..af9209e
+--- /dev/null
++++ b/platform/boreas/drivers.c
+@@ -0,0 +1,306 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * boreas_drivers.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
++ *      Author: liam <liambeguin.at.gmail.com>
++ *
++ */
++
++#include "boreas.h"
++#include "debug.h"
++#include "boot_log.h"
++
++#include "rcc.h"
++#include "nvic_.h"
++
++#include "uart_.h"
++#include "spi_.h"
++#include "gpio_.h"
++#include "timer_.h"
++#include "ethmac_.h"
++#include "exti_.h"
++#include "exti.h"
++#include "i2c_.h"
++#include "can_.h"
++
++/** GPIO Section **/
++static void gpio_drivers_setup();
++
++/** UART Section **/
++#define UART1_PRINT_BAUDRATE	115200
++#define VN200_BAUDRATE		460800
++#define DATALINK_BAUDRATE	  9600
++static void uart_drivers_setup();
++
++/** TIMER Section **/
++//#define TIM2_FREQUENCY	262144
++static void timer_drivers_setup();
++
++/** SPI Section **/
++static void spi_drivers_setup();
++
++/** I2C Section **/
++#define I2C1_CLOCK_MODE	I2C_CLOCK_MODE_FAST
++static void i2c_drivers_setup();
++
++static void can_drivers_setup();
++can_t can = CAN_2;
++
++
++void platform_drivers_setup()
++{
++	gpio_drivers_setup();
++	uart_drivers_setup();
++	timer_drivers_setup();
++
++	i2c_drivers_setup();
++	spi_drivers_setup();
++	can_drivers_setup();
++}
++
++static void i2c_drivers_setup(){
++
++	/** I2C_2 configuration for RGB LED Driver **/
++	gpio_set_i2c_scl(GPIO_B, GPIO_PIN_10);
++	gpio_set_i2c_sda(GPIO_B, GPIO_PIN_11);
++	i2c_enable(I2C_2, I2C_CLOCK_MODE_FAST);
++	boot_success("I2C_2 enabled\n");
++}
++
++void i2c1_ev_isr()
++{
++	i2c_handle_ev_interrupt(I2C_1);
++}
++
++void i2c1_er_isr()
++{
++	i2c_handle_er_interrupt(I2C_1);
++}
++void i2c2_ev_isr()
++{
++	i2c_handle_ev_interrupt(I2C_2);
++}
++
++void i2c2_er_isr()
++{
++	i2c_handle_er_interrupt(I2C_2);
++}
++
++
++
++static void spi_drivers_setup()
++{
++	//SPI1 to extern
++	gpio_set_spi_clk(GPIO_A,  GPIO_PIN_5);
++	gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
++	gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
++	spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
++	boot_success("External SPI enabled at 4000000\n");
++
++}
++
++static void gpio_drivers_setup()
++{
++    // Set base address and AHB bit for all GPIO ports
++    gpio_enable(GPIO_A);
++    gpio_enable(GPIO_B);
++    gpio_enable(GPIO_C);
++    gpio_enable(GPIO_D);
++    gpio_enable(GPIO_E);
++    gpio_enable(GPIO_F);
++    gpio_enable(GPIO_G);
++    gpio_enable(GPIO_H);
++    gpio_enable(GPIO_I);
++}
++
++/* UART declaration */
++uart_t uart_print = UART_1;
++uart_t uart_external = UART_2;
++static void uart_drivers_setup()
++{
++	/** Enable print UART1 **/
++	gpio_set_uart_tx(GPIO_B, GPIO_PIN_6);
++	gpio_set_uart_rx(GPIO_B, GPIO_PIN_7);
++	uart_enable(UART_1, UART1_PRINT_BAUDRATE);
++	boot_success("Starting UART_1 at %d\n", UART1_PRINT_BAUDRATE);
++/* testing */
++	gpio_set_uart_tx(GPIO_A, GPIO_PIN_2);
++	gpio_set_uart_rx(GPIO_A, GPIO_PIN_3);
++	uart_enable(UART_2,VN200_BAUDRATE);
++	boot_success("Starting UART_2 at %d\n", VN200_BAUDRATE);
++
++	gpio_set_uart_tx(GPIO_C, GPIO_PIN_10);
++	gpio_set_uart_rx(GPIO_C, GPIO_PIN_11);
++	uart_enable(UART_3, DATALINK_BAUDRATE);
++	boot_success("Starting UART_3 at %d\n", DATALINK_BAUDRATE);
++
++
++	gpio_set_uart_tx(GPIO_A, GPIO_PIN_0);
++	gpio_set_uart_rx(GPIO_A, GPIO_PIN_1);
++	uart_enable(UART_4, VN200_BAUDRATE);
++	boot_success("Starting UART_4 at %d\n", VN200_BAUDRATE);
++
++	gpio_set_uart_tx(GPIO_C, GPIO_PIN_12);
++	gpio_set_uart_rx(GPIO_D, GPIO_PIN_2);
++	uart_enable(UART_5, VN200_BAUDRATE);
++	boot_success("Starting UART_5 at %d\n",VN200_BAUDRATE);
++}
++//print
++void usart1_isr()
++{
++    uart_handle_interrupt(UART_1);
++}
++//
++void usart2_isr()
++{
++    uart_handle_interrupt(UART_2);
++}
++//
++void usart3_isr()
++{
++    uart_handle_interrupt(UART_3);
++}
++//
++void uart4_isr()
++{
++    uart_handle_interrupt(UART_4);
++}
++//
++void uart5_isr()
++{
++    uart_handle_interrupt(UART_5);
++}
++
++static void timer_drivers_setup()
++{
++    // Enable Motor timer
++    timer_enable(TIM_1);
++    timer_enable(TIM_8);
++
++    // Enable Soft timer
++    timer_enable(TIM_2);
++
++
++    // Setting Motor timer to about 2MHz (2^21) = 2097152
++    timer_select_internal_clock(TIM_1,
++            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
++                    - 1);
++
++   boot_success("Starting TIM_1 at about 2MHz\n");
++
++    // Setting servo timer to about 30Hz (2^5) = 32
++    // Setting Motor timer to about 2MHz (2^21) = 2097152
++    timer_select_internal_clock(TIM_8,
++            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)
++                    - 1);
++
++   boot_success("Starting TIM_8 at about 30Hz\n");
++
++    // Setting Soft timer to about 32kHz
++    timer_select_internal_clock(TIM_2,
++            (rcc_sysclk_get_clock_frequency(RCC_SYSCLK_CLOCK_PCLK1_TIM) / 2097152)//32768)
++                    - 1);
++   boot_success("Starting TIM_2 at about 32kHz\n");
++
++    // Start ALL timers
++    timer_start(TIM_1, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
++    timer_start(TIM_2, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
++    timer_start(TIM_8, 0xFFFF, NULL, NULL, TIMER_MODE_CLOCK);
++
++
++    timer_set_channel_compare(TIM_1, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
++    timer_set_channel_compare(TIM_8, TIMER_CHANNEL_1, 0x00FF, NULL, NULL);
++}
++
++void tim1_up_tim10_isr()
++{
++    timer_handle_interrupt(TIM_1);
++}
++
++void tim1_cc_isr()
++{
++    timer_handle_interrupt(TIM_1);
++}
++void tim2_isr()
++{
++    timer_handle_interrupt(TIM_2);
++}
++void tim8_up_tim13_isr()
++{
++    timer_handle_interrupt(TIM_8);
++}
++void tim8_cc_isr()
++{
++    timer_handle_interrupt(TIM_8);
++}
++
++static void can_drivers_setup()
++{
++    // Configure the CAN PB12/13
++    gpio_set_can_rx(GPIO_B, GPIO_PIN_12);
++    gpio_set_can_tx(GPIO_B, GPIO_PIN_13);
++
++    // Start it
++    can_enable(CAN_2, 1000000);
++}
++
++void can2_tx_isr()
++{
++    can_handle_tx_interrupt(CAN_2);
++}
++void can2_rx0_isr()
++{
++    can_handle_rx0_interrupt(CAN_2);
++}
++void can2_rx1_isr()
++{
++    can_handle_rx1_interrupt(CAN_2);
++}
++void can2_sce_isr()
++{
++    can_handle_sce_interrupt(CAN_2);
++}
++
++/** External interrupts for RC receiver**/
++void exti0_isr()
++{
++    exti_handle_interrupt(EXTI_LINE_Px0);
++}
++void exti1_isr()
++{
++    exti_handle_interrupt(EXTI_LINE_Px1);
++}
++void exti2_isr()
++{
++    exti_handle_interrupt(EXTI_LINE_Px2);
++}
++void exti3_isr()
++{
++    exti_handle_interrupt(EXTI_LINE_Px3);
++}
++void exti4_isr()
++{
++    exti_handle_interrupt(EXTI_LINE_Px4);
++}
++void exti9_5_isr()
++{
++    exti_handle_9_5_interrupt();
++}
++void exti15_10_isr()
++{
++    exti_handle_15_10_interrupt();
++}
++
+diff --git a/platform/boreas/include.cmake b/platform/boreas/include.cmake
+new file mode 100755
+index 0000000..00fcd56
+--- /dev/null
++++ b/platform/boreas/include.cmake
+@@ -0,0 +1,42 @@
++#
++# This file is part of HiKoB Openlab.
++#
++# HiKoB Openlab is free software: you can redistribute it and/or
++# modify it under the terms of the GNU Lesser General Public License
++# as published by the Free Software Foundation, version 3.
++#
++# HiKoB Openlab is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# Lesser General Public License for more details.
++#
++# You should have received a copy of the GNU Lesser General Public
++# License along with HiKoB Openlab. If not, see
++# <http://www.gnu.org/licenses/>.
++#
++# Copyright (C) 2011 HiKoB.
++#
++
++set(OOCD_TARGET stm32f4x)
++set(PLATFORM_OOCD_ITF ${PROJECT_SOURCE_DIR}/platform/scripts/boreas.cfg)
++
++set(LINKSCRIPT ../scripts/stm32f407.ld)
++
++set(DRIVERS stm32f4xx)
++
++set(PLATFORM_RAM_KB 128)
++
++# Set the flags to select the application that may be compiled
++set(PLATFORM_HAS_SYSTICK  1)
++set(PLATFORM_HAS_SOFTTIM  1)
++set(PLATFORM_HAS_BUTTON   1)
++set(PLATFORM_HAS_LEDS	  1)
++set(PLATFORM_HAS_GX3	  1)
++set(PLATFORM_HAS_TLC59116 1)
++set(PLATFORM_HAS_MOTORS	  1)
++set(PLATFORM_HAS_RC	  1)
++
++# To be useful, we have to add usb support on stm32f4xx
++#set(PLATFORM_HAS_USB      1)
++
++include(${PROJECT_SOURCE_DIR}/platform/include-cm4.cmake)
+diff --git a/platform/boreas/leds.c b/platform/boreas/leds.c
+new file mode 100644
+index 0000000..0ffcb48
+--- /dev/null
++++ b/platform/boreas/leds.c
+@@ -0,0 +1,83 @@
++/*
++ * This file is part of HiKoB Openlab.
++ *
++ * HiKoB Openlab is free software: you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public License
++ * as published by the Free Software Foundation, version 3.
++ *
++ * HiKoB Openlab is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with HiKoB Openlab. If not, see
++ * <http://www.gnu.org/licenses/>.
++ *
++ * Copyright (C) 2011,2012 HiKoB.
++ */
++
++/*
++ * boreas_leds.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "boreas.h"
++
++static gpio_t leds_gpio[] =
++{ GPIO_D, GPIO_D, GPIO_B, GPIO_B };
++static gpio_pin_t leds_pin[] =
++{ GPIO_PIN_0, GPIO_PIN_5, GPIO_PIN_5, GPIO_PIN_8 };
++static int leds_num = sizeof(leds_gpio) / sizeof(leds_gpio[0]);
++
++void platform_leds_setup()
++{
++    // Configure the LEDs
++    int i;
++    for (i = 0; i < leds_num; i++)
++    {
++        gpio_set_output(leds_gpio[i], leds_pin[i]);
++    }
++
++    // Clear LEDs
++    leds_off(0xFF);
++}
++
++void leds_off(uint8_t leds)
++{
++    int i;
++    for (i = 0; i < leds_num; i++)
++    {
++        if (leds & (1 << i))
++        {
++		gpio_pin_set(leds_gpio[i], leds_pin[i]);
++        }
++    }
++}
++void leds_on(uint8_t leds)
++{
++    int i;
++    for (i = 0; i < leds_num; i++)
++    {
++        if (leds & (1 << i))
++        {
++		gpio_pin_clear(leds_gpio[i], leds_pin[i]);
++        }
++    }
++}
++
++void leds_toggle(uint8_t leds)
++{
++    int i;
++    for (i = 0; i < leds_num; i++)
++    {
++        if (leds & (1 << i))
++        {
++            gpio_pin_toggle(leds_gpio[i], leds_pin[i]);
++        }
++    }
++}
++
+diff --git a/platform/boreas/lib.c b/platform/boreas/lib.c
+new file mode 100644
+index 0000000..6c1db0b
+--- /dev/null
++++ b/platform/boreas/lib.c
+@@ -0,0 +1,32 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * boreas_lib.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "boreas.h"
++#include "softtimer/soft_timer_.h"
++#include "event.h"
++
++void platform_lib_setup()
++{
++    // Setup the software timer
++    soft_timer_config(TIM_2, TIMER_CHANNEL_1);
++    timer_start(TIM_2, 0xFFFF, soft_timer_update, NULL, TIMER_MODE_CLOCK);
++
++    // Setup the event library
++    event_init();
++}
+diff --git a/platform/boreas/net.c b/platform/boreas/net.c
+new file mode 100644
+index 0000000..9890914
+--- /dev/null
++++ b/platform/boreas/net.c
+@@ -0,0 +1,24 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * boreas_net.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "boreas.h"
++
++void platform_net_setup()
++{
++}
+diff --git a/platform/boreas/openocd.cfg b/platform/boreas/openocd.cfg
+new file mode 100644
+index 0000000..f74a07b
+--- /dev/null
++++ b/platform/boreas/openocd.cfg
+@@ -0,0 +1,9 @@
++#jtag_khz 1000
++
++#interface ft2232
++#ft2232_layout "usbjtag"
++#ft2232_vid_pid 0x0403 0x6010
++
++#jtag_nsrst_delay 100
++#jtag_ntrst_delay 100
++
+diff --git a/platform/boreas/periph.c b/platform/boreas/periph.c
+new file mode 100644
+index 0000000..f3a0dbe
+--- /dev/null
++++ b/platform/boreas/periph.c
+@@ -0,0 +1,244 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++
++/*
++ * boreas_periph.c
++ *
++ *  Created on: Aug 01, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include <string.h>
++#include "boreas.h"
++
++#include "spi.h"
++#include "gpio.h"
++
++#define NO_DEBUG_HEADER
++#include "debug.h"
++#include "boot_log.h"
++#include "stm32f4xx/nvic_.h"
++#include "stm32f4xx/syscfg.h"
++
++
++/** PWM setup **/
++#include "motors.h"
++static void motors_setup();
++
++// PE12 - LEVEL SHIFTER ENABLE
++#define LEVELSHIFTER_EN_PORT	GPIO_E
++#define LEVELSHIFTER_EN_PIN	GPIO_PIN_10
++
++
++/** RC setup **/
++#include "rc.h"
++static void rc_setup();
++
++/** IMU setup **/
++#include "vn200.h"
++static void vn200_setup();
++
++/** LED DRIVER setup **/
++#include "tlc59116.h"
++static void led_driver_setup();
++// All Call Address
++#define LED_DRIVER_ADDRESS 0xC0
++#define LED_ALLCALLADDR	   0xD0
++
++/** DataLink setup **/
++#include "datalink.h"
++static void datalink_setup();
++
++void platform_periph_setup()
++{
++//	datalink_setup();
++	motors_setup();
++	rc_setup();
++ 	led_driver_setup();
++	vn200_setup();
++}
++
++static void led_driver_setup(){
++
++	tlc59116_config(I2C_2, LED_DRIVER_ADDRESS);
++
++	if(tlc59116_init())
++		boot_failure("LED driver sent back an error \n");
++	else
++		boot_success("TLC59116 initialized on I2C_2 (turning LEDs off)\n");
++}
++
++static void motors_setup(){
++
++	_motor_t motors[] = {
++		{
++			.timer 		= TIM_1,
++			.channel	= TIMER_CHANNEL_1,
++			.alternate 	= GPIO_AF_1,
++			.port 		= GPIO_E,
++			.pin 		= GPIO_PIN_9
++		},
++		{
++			.timer 		= TIM_1,
++			.channel	= TIMER_CHANNEL_2,
++			.alternate 	= GPIO_AF_1,
++			.port 		= GPIO_E,
++			.pin 		= GPIO_PIN_11
++		},
++		{
++			.timer 		= TIM_1,
++			.channel	= TIMER_CHANNEL_3,
++			.alternate 	= GPIO_AF_1,
++			.port 		= GPIO_E,
++			.pin 		= GPIO_PIN_13
++		},
++		{
++			.timer 		= TIM_1,
++			.channel	= TIMER_CHANNEL_4,
++			.alternate 	= GPIO_AF_1,
++			.port 		= GPIO_E,
++			.pin 		= GPIO_PIN_14
++		}
++
++	};
++
++	/**
++	 * Setting up LEVEL_SHIFTER
++	 */
++	gpio_enable(LEVELSHIFTER_EN_PORT);
++	gpio_set_output(LEVELSHIFTER_EN_PORT, LEVELSHIFTER_EN_PIN);
++	gpio_pin_set(LEVELSHIFTER_EN_PORT, LEVELSHIFTER_EN_PIN);
++
++	/**
++	 * Enabling GPIOs related to the motors
++	 */
++	uint8_t i;
++	for(i=0; i<sizeof(motors)/sizeof(motors[0]); i++){
++		gpio_enable(motors[i].port);
++		gpio_set_timer_output(motors[i].port, motors[i].pin,
++					(gpio_af_t)motors[i].alternate);
++	}
++
++	motors_config(motors);
++	motors_idle();
++	boot_success("Motors initialized and set to idle speed !\n");
++}
++
++static void rc_setup(){
++
++	channel_t channels[] = {
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_14,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_13,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_12,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_11,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_10,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_9,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_D,
++			.pin = GPIO_PIN_8,
++			.syscfg_port = SYSCFG_PORT_D,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_B,
++			.pin = GPIO_PIN_15,
++			.syscfg_port = SYSCFG_PORT_B,
++			.last_time = 0,
++			.value = 0,
++		},
++		{
++			.port = GPIO_B,
++			.pin = GPIO_PIN_14,
++			.syscfg_port = SYSCFG_PORT_B,
++			.last_time = 0,
++			.value = 0,
++		},
++
++	};
++
++	if (rc_config_channel(TIM_2, channels))
++		boot_failure("RC maybe exti or nvic problem \n");
++	else
++		boot_success("RC configured \n");
++}
++
++/* DataLink connected to U1 */
++static void datalink_setup(){
++
++	datalink_config(UART_3);
++
++	uart_transfer(UART_3,(uint8_t*)"hello world!!\n", 15);
++	boot_success("DataLink initialized on U1\n");
++}
++
++/* VN200 on RS232-1, RS232-2 or UART_5 */
++#define VNPORT_RS232_2
++static void vn200_setup() {
++
++#if defined(VNPORT_RS232_1)
++
++	vn200_init(UART_4);
++	boot_success("VN200 initializing on RS232-1... \n");
++
++#elif defined(VNPORT_RS232_2)
++
++	vn200_init(UART_2);
++	boot_success("VN200 initializing on RS232-2... \n");
++
++#elif defined(VNPORT_U2)
++
++	vn200_init(UART_5);
++	boot_success("VN200 initializing on UART_5... \n");
++
++#else
++	boot_failure("VN200 bad port definition !\n");
++	return;
++#endif
++}

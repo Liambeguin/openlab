@@ -1,0 +1,201 @@
+diff --git a/lib/differential/derivative.c b/lib/differential/derivative.c
+new file mode 100644
+index 0000000..cde3b94
+--- /dev/null
++++ b/lib/differential/derivative.c
+@@ -0,0 +1,42 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * derivative.c
++ *
++ *  		Created on: Feb 10, 2014
++ *      		Author: liam <liambeguin.at.gmail.com>
++ *      Implementation: Florent Touchard <jackdesbwa.at.gmail.com>
++ *
++ *      http://en.wikipedia.org/wiki/Numerical_differentiation
++ */
++
++#include "derivative.h"
++
++
++void derivative_init(derivative_t *derivee, float dt){
++	derivee->dt = dt;
++	derivee->derivative = 0;
++	derivee->var_m1 = 0;
++}
++
++inline void derivative_update(derivative_t *derivee, const float var) {
++	derivee->derivative = (var - derivee->var_m1) / derivee->dt;
++	derivee->var_m1 = var;
++}
++
++inline void derivative_reset(derivative_t *derivee)
++{
++	derivee->derivative = 0;
++}
++
++
+diff --git a/lib/differential/integrate.c b/lib/differential/integrate.c
+new file mode 100644
+index 0000000..30fab9e
+--- /dev/null
++++ b/lib/differential/integrate.c
+@@ -0,0 +1,39 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * integrate.h
++ *
++ *  		Created on: Feb 10, 2014
++ *      		Author: liam <liambeguin.at.gmail.com>
++ *      Implementation: Florent Touchard <jackdesbwa.at.gmail.com>
++ *
++ *      http://mathworld.wolfram.com/EulerForwardMethod.html
++ *      http://en.wikipedia.org/wiki/Euler_method
++ */
++
++#include "integrate.h"
++
++void integrate_init(integrate_t *integrate, float dt){
++	integrate->dt_2 = (dt / 2.0f);
++	integrate->integrale = 0;
++	integrate->var_m1 = 0;
++}
++
++inline void integrate_update(integrate_t *integrate, const float var){
++	integrate->integrale += (var + integrate->var_m1) * integrate->dt_2;
++	integrate->var_m1 = var;
++}
++
++inline void integrate_reset(integrate_t *integrate) {
++	integrate->integrale = 0;
++}
+diff --git a/lib/derivative.h b/lib/derivative.h
+new file mode 100644
+index 0000000..d73e338
+--- /dev/null
++++ b/lib/derivative.h
+@@ -0,0 +1,46 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * derivative.h
++ *
++ *  		Created on: Feb 10, 2014
++ *      		Author: liam <liambeguin.at.gmail.com>
++ *      Implementation: Florent Touchard <jackdesbwa.at.gmail.com>
++ *
++ *      http://en.wikipedia.org/wiki/Numerical_differentiation
++ */
++
++#ifndef DERIVATIVE_H_
++#define DERIVATIVE_H_
++
++typedef struct{
++	 float dt;
++	 float var_m1;
++	 float derivative;
++}derivative_t;
++
++/*! initialization
++		@param dt La base de temps de la derive.
++ */
++void derivative_init(derivative_t *derivee, float dt);
++
++/*! Calcul de la derive
++		@param var valeur courante sur laquel effectue la derive
++		@return la valeur de la derive
++ */
++inline void derivative_update(derivative_t *derivee, const float var);
++
++/*! Remise a zero de la derivee */
++inline void derivative_reset(derivative_t *derivee);
++
++#endif /* DERIVATIVE_H_ */
+diff --git a/lib/integrate.h b/lib/integrate.h
+new file mode 100644
+index 0000000..f8a0f79
+--- /dev/null
++++ b/lib/integrate.h
+@@ -0,0 +1,50 @@
++/*This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * integrate.h
++ *
++ *  		Created on: Feb 10, 2014
++ *      		Author: liam <liambeguin.at.gmail.com>
++ *      Implementation: Florent Touchard <jackdesbwa.at.gmail.com>
++ *
++ *      http://mathworld.wolfram.com/EulerForwardMethod.html
++ *      http://en.wikipedia.org/wiki/Euler_method
++ *
++ *      \brief : Classe qui implemente une integrale trapeozidale
++ */
++
++#ifndef INTEGRATE_H_
++#define INTEGRATE_H_
++
++
++typedef struct{
++	 float dt_2;
++	 float var_m1;
++	 float integrale;
++}integrate_t;
++
++/*! Constructeur
++		@param dt La base de temps de l'integrale.
++ */
++void integrate_init(integrate_t *integrate, float dt);
++
++/*! Calcul de l'integrale
++		@param var valeur courante sur laquel effectue l'integrale
++		@return la valeur de l'integrale
++ */
++inline void integrate_update(integrate_t *integrate, const float var);
++
++/*! Remise a zero de l'integrale */
++inline void integrate_reset(integrate_t *integrate);
++
++
++#endif /* INTEGRATE_H_ */

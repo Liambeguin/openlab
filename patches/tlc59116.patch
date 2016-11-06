@@ -1,0 +1,332 @@
+diff --git a/periph/tlc59116.h b/periph/tlc59116.h
+new file mode 100644
+index 0000000..f61a82f
+--- /dev/null
++++ b/periph/tlc59116.h
+@@ -0,0 +1,70 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * tlc59116.h
++ *
++ *  Created on: Jan 21, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef TLC59116_H_
++#define TLC59116_H_
++
++#include <stdint.h>
++
++#include "i2c.h"
++
++typedef struct{
++	i2c_t i2c;
++	uint8_t addr;
++}tlc59116_t;
++
++
++typedef enum{
++	TLC59116_LED0,
++	TLC59116_LED1,
++	TLC59116_LED2,
++	TLC59116_LED3,
++	TLC59116_LED4,
++}tlc59116_led_t;
++
++typedef struct{
++	uint8_t red;
++	uint8_t green;
++	uint8_t blue;
++
++}tlc59116_color_t;
++
++
++// to get the colors, refer to : 	http://web.njit.edu/~kevin/rgb.txt.html
++
++
++#define		RGB_OFF		(tlc59116_color_t){.red = 0, .green = 0, .blue = 0}
++#define		RGB_WHITE	(tlc59116_color_t){.red = 255, .green = 255, .blue = 255}
++
++#define		RGB_RED		(tlc59116_color_t){.red = 255, .green = 0, .blue = 0}
++#define		RGB_GREEN	(tlc59116_color_t){.red = 0, .green = 255, .blue = 0}
++#define		RGB_BLUE	(tlc59116_color_t){.red = 0, .green = 0, .blue = 255}
++
++#define		RGB_PURPLE	(tlc59116_color_t){.red = 148, .green = 0, .blue = 211}
++#define		RGB_ORANGE	(tlc59116_color_t){.red = 255, .green = 69, .blue = 0}		//255;127;36 to try
++#define		RGB_YELLOW	(tlc59116_color_t){.red = 255, .green = 255, .blue = 0}
++
++void tlc59116_config(i2c_t i2c, uint8_t addr);
++uint8_t tlc59116_init();
++
++void tlc59116_get_led_color(tlc59116_led_t led);
++//void tlc59116_get_led_color(tlc59116_led_t led, tlc59116_color_t *color)
++void tlc59116_set_led_color(tlc59116_led_t led, tlc59116_color_t color);
++
++#endif /* TLC59116_H_ */
+diff --git a/periph/tlc59116/tlc59116.c b/periph/tlc59116/tlc59116.c
+new file mode 100644
+index 0000000..5672775
+--- /dev/null
++++ b/periph/tlc59116/tlc59116.c
+@@ -0,0 +1,165 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * tlc59116.c
++ *
++ *  Created on: Jan 21, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include <stdint.h>
++
++#include "i2c.h"
++
++#define NO_DEBUG_HEADER()
++#include "debug.h"
++
++#include "tlc59116.h"
++#include "tlc59116_regs.h"
++
++tlc59116_t _led_driver;
++
++
++void tlc59116_config(i2c_t i2c, uint8_t addr){
++
++	_led_driver.i2c		= i2c;
++	_led_driver.addr	= addr;
++}
++
++
++uint8_t tlc59116_init(){
++
++	uint8_t tx_buf[10] 	= {0};
++	uint8_t rx_buf[4] 	= {0};
++	uint8_t read_addr	= 0x00;
++
++
++	tx_buf[0] = TLC59116_REG_MODE1 | TLC59116_CTRL_AUTO_INC;
++	tx_buf[1] = 0x01;	// MODE1 value
++	tx_buf[2] = 0x00;	// MODE2 value
++	i2c_tx(_led_driver.i2c, _led_driver.addr, tx_buf, 3);
++
++	//setting LED output state
++	tx_buf[0] = TLC59116_REG_LEDOUT0 | TLC59116_CTRL_AUTO_INC;
++	tx_buf[1] = TLC59116_LEDOUT_ALL_PWM;	// LEDOUT0
++	tx_buf[2] = TLC59116_LEDOUT_ALL_PWM;	// LEDOUT1
++	tx_buf[3] = TLC59116_LEDOUT_ALL_PWM;	// LEDOUT2
++	tx_buf[4] = TLC59116_LEDOUT_ALL_PWM;	// LEDOUT3
++	i2c_tx(_led_driver.i2c, _led_driver.addr, tx_buf, 5);
++
++	//Make LED0 blink for init
++	tlc59116_set_led_color(TLC59116_LED0, RGB_BLUE);
++
++	read_addr = TLC59116_REG_EFLAG1 | TLC59116_CTRL_AUTO_INC;
++	if(i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr,1,rx_buf,2))
++		return 1; /* error */
++
++	tlc59116_set_led_color(TLC59116_LED0, RGB_OFF);
++	tlc59116_set_led_color(TLC59116_LED1, RGB_OFF);
++	tlc59116_set_led_color(TLC59116_LED2, RGB_OFF);
++	tlc59116_set_led_color(TLC59116_LED3, RGB_OFF);
++	tlc59116_set_led_color(TLC59116_LED4, RGB_OFF);
++
++	return 0;
++}
++
++void tlc59116_get_led_color(tlc59116_led_t led/*, tlc59116_color_t *color*/){
++
++	uint8_t read_addr = 0;
++	uint8_t rx_buf[3];
++	char name[6] = {'L', 'E', 'D', '_', 'X', '\0'};
++
++	switch(led){
++	case TLC59116_LED0:
++		read_addr = TLC59116_REG_PWM0 | 0x80;
++		name[4] = '0';
++		break;
++	case TLC59116_LED1:
++		read_addr = TLC59116_REG_PWM3 | 0x80;
++		name[4] = '1';
++		break;
++	case TLC59116_LED2:
++		read_addr = TLC59116_REG_PWM6 | 0x80;
++		name[4] = '2';
++		break;
++	case TLC59116_LED3:
++		read_addr = TLC59116_REG_PWM9 | 0x80;
++		name[4] = '3';
++		break;
++	case TLC59116_LED4:
++		read_addr = TLC59116_REG_PWM13 | 0x80;
++		name[4] = '4';
++		break;
++	default:
++		log_error("undefined LED");
++		break;
++	}
++
++	i2c_tx_rx(_led_driver.i2c, _led_driver.addr, &read_addr, 1, rx_buf, 4);
++
++	/*
++	color->red 		= rx_buf[0];
++	color->green 	= rx_buf[1];
++	color->blue		= rx_buf[2];
++	*/
++
++	if((16 + (rx_buf[0]/51 * 36) + (rx_buf[1]/51 * 6) + rx_buf[2]/51)==16)
++		printf("%s is  OFF  \n", name);
++	else
++	printf("%s is \x1b[48;5;%dm     \x1B[48;0m  \n", name,
++		(16 + (rx_buf[0]/51 * 36) + (rx_buf[1]/51 * 6) + rx_buf[2]/51));
++
++
++}
++
++void tlc59116_set_led_color(tlc59116_led_t led, tlc59116_color_t color){
++
++	uint8_t tmp[4] = {0x00, color.green, color.red, color.blue};
++	char name[6] = {'L', 'E', 'D', '_', 'X', '\0'};
++
++	switch(led){
++	case TLC59116_LED0:
++		tmp[0] = TLC59116_REG_PWM0 | 0x80;
++		name[4] = '0';
++		break;
++	case TLC59116_LED1:
++		tmp[0] = TLC59116_REG_PWM3 | 0x80;
++		name[4] = '1';
++		break;
++	case TLC59116_LED2:
++		tmp[0] = TLC59116_REG_PWM6 | 0x80;
++		name[4] = '2';
++		break;
++	case TLC59116_LED3:
++		tmp[0] = TLC59116_REG_PWM9 | 0x80;
++		name[4] = '3';
++		break;
++	case TLC59116_LED4:
++		tmp[0] = TLC59116_REG_PWM13 | 0x80;
++		name[4] = '4';
++		break;
++	default:
++		log_error("undefined LED");
++		break;
++	}
++
++	i2c_tx(_led_driver.i2c, _led_driver.addr, &tmp, 4);
++
++	//printing color of led
++//	if((16 + (red/51 * 36) + (green/51 * 6) + blue/51)==16)
++//			printf("%s is  OFF  \n", name);
++//		else
++//		printf("%s set to \x1b[48;5;%dm     \x1B[48;0m  \n", name,
++//				(16 + (red/51 * 36) + (green/51 * 6) + blue/51));
++
++}
+diff --git a/periph/tlc59116/tlc59116_regs.h b/periph/tlc59116/tlc59116_regs.h
+new file mode 100644
+index 0000000..dc02401
+--- /dev/null
++++ b/periph/tlc59116/tlc59116_regs.h
+@@ -0,0 +1,79 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * tlc59116_regs.h
++ *
++ *  Created on: Jan 25, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++//colors for 0 to 5
++//printf("[\x1b[48;5;%dm   \x1B[48;0m]  \n", (16 + (Red * 36) + (Green * 6) + Blue));
++
++
++#ifndef TLC59116_REGS_H_
++#define TLC59116_REGS_H_
++
++enum{
++	TLC59116_REG_MODE1		= 0x00,
++	TLC59116_REG_MODE2		= 0x01,
++	/* */
++	TLC59116_REG_PWM0		= 0x02,
++	TLC59116_REG_PWM1		= 0x03,
++	TLC59116_REG_PWM2		= 0x04,
++	TLC59116_REG_PWM3		= 0x05,
++	TLC59116_REG_PWM4		= 0x06,
++	TLC59116_REG_PWM5		= 0x07,
++	TLC59116_REG_PWM6		= 0x08,
++	TLC59116_REG_PWM7		= 0x09,
++	TLC59116_REG_PWM8		= 0x0A,
++	TLC59116_REG_PWM9		= 0x0B,
++	TLC59116_REG_PWM10		= 0x0C,
++	TLC59116_REG_PWM11		= 0x0D,
++	TLC59116_REG_PWM12		= 0x0E,
++	TLC59116_REG_PWM13		= 0x0F,
++	TLC59116_REG_PWM14		= 0x10,
++	TLC59116_REG_PWM15		= 0x11,
++	/* */
++	TLC59116_REG_GRPPWM		= 0x12,
++	TLC59116_REG_GRPFREQ	= 0x13,
++	/* */
++	TLC59116_REG_LEDOUT0	= 0x14,
++	TLC59116_REG_LEDOUT1	= 0x15,
++	TLC59116_REG_LEDOUT2	= 0x16,
++	TLC59116_REG_LEDOUT3	= 0x17,
++	TLC59116_REG_SUBADR1	= 0x18,
++	TLC59116_REG_SUBADR2	= 0x19,
++	TLC59116_REG_SUBADR3	= 0x1A,
++	/* */
++	TLC59116_REG_ALLCALLADR	= 0x1B,
++	TLC59116_REG_IREF		= 0x1C,
++	TLC59116_REG_EFLAG1		= 0x1D,
++	TLC59116_REG_EFLAG2		= 0x1E,
++};
++
++enum{
++	TLC59116_CTRL_AUTO_INC = 0x80,
++};
++
++enum{
++	TLC59116_LEDOUT_OFF			= 0x00,
++	TLC59116_LEDOUT_FULL_ON		= 0x01,
++	TLC59116_LEDOUT_PWM			= 0x02,
++	TLC59116_LEDOUT_PWM_GRPPGM	= 0x03,
++	TLC59116_LEDOUT_ALL_PWM		= 0xAA,
++};
++
++
++#endif /* TLC59116_REGS_H_ */

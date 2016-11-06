@@ -1,0 +1,893 @@
+diff --git a/appli/tests/periph/CMakeLists.txt b/appli/tests/periph/CMakeLists.txt
+new file mode 100644
+index 0000000..e0f6809
+--- /dev/null
++++ b/appli/tests/periph/CMakeLists.txt
+@@ -0,0 +1,59 @@
++# This file is part of DronolabSTM32-embedded
++#
++# DronolabSTM32-embedded is a student project designed
++# for flying drones.
++#
++# Go to < dronolab.etsmtl.ca > to find out more about
++# the project
++
++# Created on: 2013-10-13
++#     Author: liam
++#
++
++# Adding void test task
++add_executable(test_periph_void void.c)
++target_link_libraries(test_periph_void platform )
++
++# Adding uart chain test
++add_executable(test_periph_uart_chain full_uart.c)
++target_link_libraries(test_periph_uart_chain platform)
++
++
++
++# Adding Motors test
++if(${PLATFORM_HAS_MOTORS})
++	add_executable(test_periph_motors motors)
++	target_link_libraries(test_periph_motors platform )
++endif(${PLATFORM_HAS_MOTORS})
++
++
++# Adding RC test
++if(${PLATFORM_HAS_RC})
++	add_executable(test_periph_rc rc)
++	target_link_libraries(test_periph_rc platform )
++endif(${PLATFORM_HAS_RC})
++
++
++# Adding TLC59116 test
++if(${PLATFORM_HAS_TLC59116})
++	add_executable(test_periph_tlc59116 tlc59116)
++	target_link_libraries(test_periph_tlc59116 platform )
++endif(${PLATFORM_HAS_TLC59116})
++
++
++# Adding GX3 test
++if(${PLATFORM_HAS_GX3})
++	add_executable(test_periph_gx3 gx3)
++	target_link_libraries(test_periph_gx3 platform )
++endif(${PLATFORM_HAS_GX3})
++
++# TODO : add condition around this block
++add_executable (test_periph_vn200 vn200.c)
++target_link_libraries (test_periph_vn200 platform)
++
++# Adding LIS302DL test
++if(${PLATFORM_HAS_LIS302DL})
++	add_executable(test_periph_lis302dl lis302dl)
++	target_link_libraries(test_periph_lis302dl platform )
++endif(${PLATFORM_HAS_LIS302DL})
++
+diff --git a/appli/tests/periph/full_uart.c b/appli/tests/periph/full_uart.c
+new file mode 100644
+index 0000000..4448693
+--- /dev/null
++++ b/appli/tests/periph/full_uart.c
+@@ -0,0 +1,65 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * full_uart.c
++ *
++ *  Created on: Jan 30, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++
++#include <stdint.h>
++#include <stdbool.h>
++#include "printf.h"
++#define NO_DEBUG_HEADER
++#include "debug.h"
++
++#include "platform.h"
++
++int main(void){
++
++rx_buffer = cb_init();
++
++	//init platform
++	platform_init();
++
++    // Set initial values
++    leds_off(0xff);
++    uint8_t count = 0;
++
++	printf("\n\n uart chain test task"
++		"\n -------------------\n");
++
++    uart_set_rx_handler(uart_external, rx_handler, NULL);
++
++    uint8_t test = '#';
++
++	while (1)
++	{
++		leds_off(0xFF);
++		leds_on(count++);
++		log_error("sending : %c\n", test);
++		uart_transfer(uart_external, &test, 1);
++
++        int i;
++        for (i = 0; i < 0x400000; i++)
++        {
++            __asm__("nop");
++        }
++
++	}
++
++	return 0;
++}
+diff --git a/appli/tests/periph/gx3.c b/appli/tests/periph/gx3.c
+new file mode 100644
+index 0000000..89d2c77
+--- /dev/null
++++ b/appli/tests/periph/gx3.c
+@@ -0,0 +1,121 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * gx3.c
++ *
++ *  Created on: Jan 22, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++#include <stdint.h>
++#include "printf.h"
++#define NO_DEBUG_HEADER
++#include "debug.h"
++
++#include "platform.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++#include "gx3.h"
++
++void gx3_periodical_task(void *arg);
++void gx3_decode_task(void *arg);
++
++void gx3_periodical_task(void *arg){
++
++    // arg is not used
++    (void) arg;
++
++    while (1){
++    	GX3_periodical();
++    	log_error("%f", drone_gx3.accel_x);
++    	vTaskDelay(configTICK_RATE_HZ/10);
++
++    }
++}
++
++
++void gx3_decode_task(void *arg){
++
++    // arg is not used
++    (void) arg;
++
++    while (1){
++    	GX3_decode_uart_rx();
++    	vTaskDelay(configTICK_RATE_HZ/300);
++
++    }
++}
++
++
++
++int main()
++{
++    xTaskHandle blink_handle, hello_handle;
++    signed portBASE_TYPE ret;
++
++    // Initialize the platform
++    platform_init();
++
++    printf("FreeRTOS Test Program\n");
++
++    // Set initial values
++    leds_on(LED_0);
++    leds_off(LED_1);
++
++    ret = xTaskCreate(gx3_decode_task, (const signed char * const) "gx3_decode_task",
++                      configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++
++    switch (ret)
++    {
++        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++            printf("Error: Could not allocate required memory\n");
++
++            while (1)
++            {
++                ;
++            }
++
++            return 0;
++
++        default:
++            printf("imu decode task created successfully\n");
++    }
++
++    xTaskCreate(gx3_periodical_task, (const signed char * const) "gx3_periodical_task",
++                configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++
++    switch (ret)
++    {
++        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++            printf("Error: Could not allocate required memory\n");
++
++            while (1)
++            {
++                ;
++            }
++
++            return 0;
++
++        default:
++            printf("GX3 task created successfully\n");
++    }
++
++    // Start the scheduler
++    platform_run();
++
++    return 0;
++}
++
+diff --git a/appli/tests/periph/lis302dl.c b/appli/tests/periph/lis302dl.c
+new file mode 100644
+index 0000000..dd8ac26
+--- /dev/null
++++ b/appli/tests/periph/lis302dl.c
+@@ -0,0 +1,96 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * lis302dl.c
++ *
++ *  Created on: Jan 24, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++#include <stdint.h>
++#include "printf.h"
++#define NO_DEBUG_HEADER
++#include "debug.h"
++
++#include "platform.h"
++#include "lis302dl.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++
++void void_task(void *arg);
++
++int main(void){
++
++	signed portBASE_TYPE ret;
++
++	//init platform
++	platform_init();
++
++    // Set initial values
++    leds_off(0xff);
++
++	printf("\n\n VOID task test"
++			"\n -------------------\n");
++
++
++	/**
++	 * Creating Empty task to test driver and/or periph stack
++	 */
++	ret =   xTaskCreate(void_task, (const signed char * const) "void",
++			configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++
++	switch (ret)
++	{
++	case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++		printf("Error: Could not allocate required memory\n");
++		while (1);
++		return 0;
++
++	default:
++		printf("VOID task created successfully\n");
++	}
++
++	// Start the scheduler
++	platform_run();
++}
++
++void void_task(void *arg){
++
++	// arg is not used
++	(void) arg;
++    uint8_t count = 0;
++
++
++	while (1)
++	{
++		leds_off(0xFF);
++		leds_on(count++);
++
++		uint8_t acc[3];
++
++		lis302dl_read(&acc[0], 0x29, 1);
++		lis302dl_read(&acc[1], 0x2B, 1);
++		lis302dl_read(&acc[2], 0x2D, 1);
++
++		log_not_implemented("%d\t%d\t%d", acc[0], acc[1], acc[2]);
++    	vTaskDelay(configTICK_RATE_HZ/4);
++	}
++}
++
++
++
++
+diff --git a/appli/tests/periph/motors.c b/appli/tests/periph/motors.c
+new file mode 100644
+index 0000000..d4a7dc4
+--- /dev/null
++++ b/appli/tests/periph/motors.c
+@@ -0,0 +1,126 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * stm32f4eval_motors.c
++ *
++ *  Created on: 2013-10-28
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++#define NO_DEBUG_HEADER
++
++#include <stdint.h>
++#include "printf.h"
++#include "debug.h"
++
++#include "platform.h"
++#include "motors.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++static void char_rx(handler_arg_t arg, uint8_t c);
++void ppm_dummy_task(void *arg);
++
++float ratio = 0;
++
++
++int main(void){
++
++    signed portBASE_TYPE ret;
++
++	//init platform
++	platform_init();
++
++	printf("\n\n Test of dummy PPM on STM32F4eval "
++				"\n -------------------\n");
++
++	// Set led to show device is on
++    leds_on(0xff);
++
++    ret =   xTaskCreate(ppm_dummy_task, (const signed char * const) "PPM_dummy",
++                configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++
++    switch (ret)
++    {
++        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++            printf("Error: Could not allocate required memory\n");
++            while (1);
++            return 0;
++
++        default:
++            printf("PWM_dummy task created successfully\n");
++            break;
++    }
++    printf("\e[2J Usage :\n"
++           "=======================================\n"
++           "  press \e[92mz\e[0m to augment and \e[92mx\e[0m to lower\n"
++           "  the ratio sent to the motors\n"
++           "========================================\n\n");
++
++    // Start the scheduler
++    platform_run();
++}
++
++uint8_t exit=0;
++static void char_rx(handler_arg_t arg, uint8_t c){
++
++//log_error("entered : 0x%x", c);
++	switch (c) {
++	case 'z':
++		ratio += 0.01;
++		break;
++	case 'x':
++		ratio -= 0.01;
++		break;
++	case 0x03:
++		ratio = 0;
++		exit=1;
++		break;
++	default:
++		break;
++	}
++
++//	checking range of ratio
++	ratio = (ratio <= 0 ? 0 : (ratio >= 1 ? 1 : ratio));
++}
++
++void ppm_dummy_task(void *arg){
++
++    // arg is not used
++    (void) arg;
++
++    leds_off(0xff);
++    leds_on(LED_1);
++
++    uart_set_rx_handler(uart_print, char_rx, NULL);
++
++    while (1){
++
++    	printf("ratio : %f                    \r", ratio);
++    	motors_ratio(ratio, ratio, ratio, ratio);
++
++			if ( exit )
++				break;
++
++    	vTaskDelay(configTICK_RATE_HZ/2);
++    }
++
++		printf("\nExiting main loop...\n");
++		while(1);
++}
++
++
++
+diff --git a/appli/tests/periph/rc.c b/appli/tests/periph/rc.c
+new file mode 100644
+index 0000000..3f66da7
+--- /dev/null
++++ b/appli/tests/periph/rc.c
+@@ -0,0 +1,93 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * rc.c
++ *
++ *  Created on: Nov 15, 2013
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++
++
++#define NO_DEBUG_HEADER
++
++#include <stdint.h>
++#include "printf.h"
++#include "debug.h"
++
++#include "platform.h"
++#include "rc.h"
++#include "attitudeController.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++void rc_dummy_task(void *arg);
++
++float ratio = 0;
++
++
++int main(void){
++
++    signed portBASE_TYPE ret;
++
++	//init platform
++	platform_init();
++
++	printf("\n\n      Dummy RC"
++	         "\n -------------------\n");
++
++	// Set led to show device is on
++    leds_on(0xff);
++
++    ret =   xTaskCreate(rc_dummy_task, (const signed char * const) "rc_dummy",
++                configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++
++    switch (ret)
++    {
++        case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++            printf("Error: Could not allocate required memory\n");
++            while (1);
++            return 0;
++
++        default:
++            printf("RC_dummy task created successfully\n");
++            break;
++    }
++
++    // Start the scheduler
++    platform_run();
++}
++
++
++
++void rc_dummy_task(void *arg){
++
++    // arg is not used
++    (void) arg;
++
++    leds_off(0xff);
++    leds_on(LED_1 | LED_3);
++
++
++
++    while(1){
++    	rc_print_channel_values();
++
++    	vTaskDelay(configTICK_RATE_HZ/4);
++    }
++
++
++}
+diff --git a/appli/tests/periph/tlc59116.c b/appli/tests/periph/tlc59116.c
+new file mode 100644
+index 0000000..a1daa2a
+--- /dev/null
++++ b/appli/tests/periph/tlc59116.c
+@@ -0,0 +1,125 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * tlc59116.c
++ *
++ *  Created on: Jan 21, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++#include <stdint.h>
++#include "printf.h"
++#define NO_DEBUG_HEADER
++#include "debug.h"
++
++#include "platform.h"
++#include "tlc59116.h"
++#define PAUSE 10
++#define MAX_COLOR 0xFF
++
++
++void set_all_led(uint8_t r, uint8_t g, uint8_t b);
++
++int main(void){
++
++	signed portBASE_TYPE ret;
++
++	//init platform
++	platform_init();
++
++    // Set initial values
++    leds_off(0xff);
++
++	printf("\n\n TLC59116 task test"
++			"\n -------------------\n");
++
++	uint8_t x;
++
++	while (1)
++	{
++		// Keep red and add green
++		for (x = 0; x < MAX_COLOR; x ++){
++			set_all_led(MAX_COLOR, x, 0);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Keep green and remove red
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(MAX_COLOR-x, MAX_COLOR, 0);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Keep green and add blue
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(0, MAX_COLOR, x);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Keep blue and remove green
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(0, MAX_COLOR-x, MAX_COLOR);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Keep blue and add red
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(x, 0, MAX_COLOR);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Bonus: add green
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(MAX_COLOR, x, MAX_COLOR);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Bonus: remove green
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(MAX_COLOR, MAX_COLOR-x, MAX_COLOR);
++			soft_timer_delay_ms(PAUSE);
++		}
++
++		// Keep red and remove blue
++		for (x = 0; x < MAX_COLOR; x ++)
++		{
++			set_all_led(MAX_COLOR, 0, MAX_COLOR-x);
++			soft_timer_delay_ms(PAUSE);
++		}
++	}
++
++}
++
++void set_all_led(uint8_t r, uint8_t g, uint8_t b){
++
++	tlc59116_color_t color = {r, g, b};
++
++	tlc59116_set_led_color(TLC59116_LED0, color);
++	tlc59116_set_led_color(TLC59116_LED1, color);
++	tlc59116_set_led_color(TLC59116_LED2, color);
++	tlc59116_set_led_color(TLC59116_LED3, color);
++	tlc59116_set_led_color(TLC59116_LED4, color);
++}
++
++
++
++
++
++
++
+diff --git a/appli/tests/periph/vn200.c b/appli/tests/periph/vn200.c
+new file mode 100644
+index 0000000..4a75774
+--- /dev/null
++++ b/appli/tests/periph/vn200.c
+@@ -0,0 +1,98 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * gx3.c
++ *
++ *  Created on: Jan 22, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++#include <stdint.h>
++#include "printf.h"
++#include "debug.h"
++#include "soft_timer.h"
++
++#include "platform.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++#include "vn200.h"
++
++#define ERROR_TEST 1
++
++void vn_send(void *arg)
++{
++
++#if ERROR_TEST
++	/* Testing Error codes... 3:O Meuh! */
++
++	// 1: Hard Fault
++	// 2: Serial Buffer Overflow
++	// 3: Invalud ChkSum
++	vn200_sendRequest((uint8_t*)"$VNRRG,01*00\r\n",15);
++	// 4: Invalid Command
++	vn200_sendRequest((uint8_t*)"$VNARG,01*XX\r\n",15);
++	// 5: Not Enough Param
++	vn200_sendRequest((uint8_t*)"$VNWRG,05*XX\r\n",15);
++	// 6: Too Many Param
++	vn200_sendRequest((uint8_t*)"$VNWRG,32,0,0,0,0,0,0,0,0,0,0*XX\r\n",40);
++	// 7: Invalid  Param
++	vn200_sendRequest((uint8_t*)"$VNWRG,05,111111*XX\r\n",25);
++	// 8: Invalid register
++	vn200_sendRequest((uint8_t*)"$VNRRG,99*XX\r\n",15);
++	// 9: Unauthorized Access
++	vn200_sendRequest((uint8_t*)"$VNWRG,01*XX\r\n",15);
++
++	/*   ***   */
++#endif
++
++	vn200_getReg(USERTAG);
++	vn200_getReg(1);
++	vn200_getReg(2);
++	vn200_getReg(3);
++	vn200_getReg(4);
++	vn200_getReg(5);
++
++	while (1);
++}
++
++int main()
++{
++	signed portBASE_TYPE ret;
++	// Initialize the platform
++	platform_init();
++
++	printf("VN200 Test Program\n");
++
++	// Set initial values
++	leds_off(0xff);
++	leds_on(0x01);
++
++	ret = xTaskCreate(vn_send, (const signed char * const) "send_func",
++             configMINIMAL_STACK_SIZE, NULL, 1, NULL);
++	switch (ret) {
++  case errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY:
++  	printf("Error: Could not allocate required memory\n");
++    while (1);
++    return 0;
++	default:
++    break;
++	}
++
++	// Start the scheduler
++	platform_run();
++
++	return 0;
++}
+diff --git a/appli/tests/periph/void.c b/appli/tests/periph/void.c
+new file mode 100644
+index 0000000..38ab8ee
+--- /dev/null
++++ b/appli/tests/periph/void.c
+@@ -0,0 +1,56 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * void.c
++ *
++ *  Created on: Jan 24, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++
++
++
++
++#include "printf.h"
++
++#include <stdint.h>
++#include "platform.h"
++#include "attitudeController.h"
++
++int main()
++{
++    // Initialize the platform
++    platform_init();
++
++    // Set initial values
++    leds_off(0xff);
++	printf("\n\n VOID task"
++			"\n -------------------\n");
++
++    uint8_t count = 0;
++
++    while (1);
++    {
++        int i;
++
++        for (i = 0; i < 0x80000; i++)
++        {
++            __asm__("nop");
++        }
++
++        leds_off(0xFF);
++        leds_on(count++);
++    }
++
++    return 0;
++}

@@ -1,0 +1,674 @@
+diff --git a/lib/attitudeController.h b/lib/attitudeController.h
+new file mode 100644
+index 0000000..552bb69
+--- /dev/null
++++ b/lib/attitudeController.h
+@@ -0,0 +1,61 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * attitudeController.h
++ *
++ *  Created on: Feb 7, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef ATTITUDECONTROLLER_H_
++#define ATTITUDECONTROLLER_H_
++
++//TODO
++typedef struct{
++	struct{
++
++		float PHYSICS_JR;
++		float PHYSICS_IXX;
++		float PHYSICS_IYY;
++		float PHYSICS_IZZ;
++
++		float PHYSICS_L;
++		float PHYSICS_B;
++		float PHYSICS_D;
++		float PHYSICS_M;
++
++		float A1;
++		float A2;
++		float A3;
++		float A4;
++		float A5;
++		float B1;
++		float B2;
++		float B3;
++	};
++
++	struct{
++		float CMD_U1;
++		float CMD_U2;
++		float CMD_U3;
++		float CMD_U4;
++	};
++}control_t;
++
++control_t drone_control;
++
++
++void attitudeController_init();
++void attitudeController_periodical();
++
++#endif /* ATTITUDECONTROLLER_H_ */
+diff --git a/lib/attitudeController/attitudeController.c b/lib/attitudeController/attitudeController.c
+new file mode 100644
+index 0000000..5d52275
+--- /dev/null
++++ b/lib/attitudeController/attitudeController.c
+@@ -0,0 +1,180 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * attitudeController.c
++ *
++ *  Created on: Feb 7, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++#include "debug.h"
++#include "attitudeController.h"
++
++#include "motors.h"
++#include "rc.h"
++#include "gx3.h"
++
++
++#define DT 		0.005// 5ms => 200 Hz
++
++#include "roll.h"
++#include "pitch.h"
++#include "yaw.h"
++
++#include "FreeRTOS.h"
++#include "task.h"
++
++typedef enum{
++	STATE_PLATFORM_IDLE = 0 ,
++	STATE_ReadyTo_FLY,
++	STATE_GO,
++
++}state_t;
++
++
++void attitudeController_init(){
++
++	//TODO check if theses are at the right place and make them const ...
++	drone_control.PHYSICS_JR	= 0.000078187598;
++	drone_control.PHYSICS_IXX	= 0.013;
++	drone_control.PHYSICS_IYY	= 0.013;
++	drone_control.PHYSICS_IZZ	= 0.024;
++
++	drone_control.PHYSICS_L	= 0.2125f;				    // Distance d'un moteur au centre de masse en m
++	drone_control.PHYSICS_B	= 0.00001418713138124377f; 	// Coéfficient de poussée vefirie avec O1=O2=O3=O4 = (environ) 455 rad/s, m = 1.198kg, g = 9.806647326217 m/s^2
++	drone_control.PHYSICS_D	= 0.00000184;			    // Coéfficient de trainée (drag)
++	drone_control.PHYSICS_M	= 1.10;						// Masse en kg
++
++	drone_control.A1 =  drone_control.PHYSICS_IYY - (drone_control.PHYSICS_IZZ/drone_control.PHYSICS_IXX);
++	drone_control.A2 =  drone_control.PHYSICS_JR  /  drone_control.PHYSICS_IXX;
++	drone_control.A3 = (drone_control.PHYSICS_IZZ -  drone_control.PHYSICS_IXX)/drone_control.PHYSICS_IYY;
++	drone_control.A4 =  drone_control.PHYSICS_JR  /  drone_control.PHYSICS_IYY;
++	drone_control.A5 = (drone_control.PHYSICS_IXX - drone_control.PHYSICS_IYY)/drone_control.PHYSICS_IZZ;
++
++	drone_control.B1 = drone_control.PHYSICS_L / drone_control.PHYSICS_IXX;
++	drone_control.B2 = drone_control.PHYSICS_L / drone_control.PHYSICS_IYY;
++	drone_control.B3 = 1.0f / drone_control.PHYSICS_IZZ;
++
++
++
++	att_ctrl_roll_init (DT /*s*/ , 10.0f, 3.0f, 1.0f);
++	att_ctrl_pitch_init(DT /*s*/ , 10.0f, 3.0f, 1.0f);
++
++	att_ctrl_yaw_init(1.0f , 0.0f , 0.0f , &drone_gx3);
++
++}
++
++void attitudeController_rc_control(){
++
++	float throttle = drone_radioController.throttle;
++
++		//Shutdown of Drone
++		if (throttle < 0.02) {
++
++//			ctrl_reset(); TODO
++			motors_kill();
++
++		}
++		else
++		{
++			float U1 = throttle * drone_motors.U1_MAX;	// Scaling RC input for ctrl
++			float U2 = att_ctrl_roll_update(drone_radioController.roll);
++			float U3 = att_ctrl_pitch_update(drone_radioController.pitch);
++			float U4 = att_ctrl_yaw_update(drone_radioController.yaw);
++
++			// Enregistrement
++			drone_control.CMD_U1 = U1;
++			drone_control.CMD_U2 = U2;
++			drone_control.CMD_U3 = U3;
++			drone_control.CMD_U4 = U4;
++
++			motors_update(U1, U2, U3, U4);
++		}
++	}
++
++
++void attitudeController_periodical(void *arg){
++
++	attitudeController_init();
++
++	static state_t motors_state = STATE_PLATFORM_IDLE;
++	static uint32_t last_time, last_go_time = 0;
++
++	while(1){
++
++
++		if (drone_radioController.kill_switch)
++			motors_state = STATE_PLATFORM_IDLE;
++
++
++		switch(motors_state){
++
++		case STATE_PLATFORM_IDLE:
++
++			motors_kill();
++
++			if (!drone_radioController.kill_switch && drone_radioController.start_sequence){
++				last_time = soft_timer_time();
++				motors_state = STATE_ReadyTo_FLY;
++			}
++			else
++				motors_state = STATE_PLATFORM_IDLE;
++			break;
++
++
++		case STATE_ReadyTo_FLY:
++
++			motors_idle();
++
++
++			if(drone_radioController.throttle >= 0.1f)
++				motors_state = STATE_GO;
++
++			else{
++
++				if(soft_timer_time()-last_time < soft_timer_s_to_ticks(3))
++					motors_state = STATE_ReadyTo_FLY;
++			else
++					motors_state = STATE_PLATFORM_IDLE;
++
++			}
++
++			break;
++
++		case STATE_GO:
++
++			if(drone_gx3.okToFly)
++				attitudeController_rc_control();
++			else
++				motors_kill();
++
++
++			if (drone_radioController.throttle <= 0.1f){
++
++				last_go_time ++;
++				motors_idle();
++				if (last_go_time >= 300 || drone_radioController.start_sequence){
++					motors_state = STATE_PLATFORM_IDLE;
++				}
++			}
++			else{
++				motors_state = STATE_GO;
++				last_go_time = 0;
++			}
++
++			break;
++
++		}
++
++		vTaskDelay(arg);
++	}
++}
+diff --git a/lib/attitudeController/pitch.h b/lib/attitudeController/pitch.h
+new file mode 100644
+index 0000000..bcfd319
+--- /dev/null
++++ b/lib/attitudeController/pitch.h
+@@ -0,0 +1,30 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * pitch.h
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef PITCH_H_
++#define PITCH_H_
++
++#include "motors.h"
++#include "gx3.h"
++
++void  att_ctrl_pitch_init(float dt ,float K1, float K2, float lambda);
++float att_ctrl_pitch_update(float cmd);
++
++
++#endif /* PITCH_H_ */
+diff --git a/lib/attitudeController/pitch/pitch.c b/lib/attitudeController/pitch/pitch.c
+new file mode 100644
+index 0000000..aaeb36a
+--- /dev/null
++++ b/lib/attitudeController/pitch/pitch.c
+@@ -0,0 +1,69 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * pitch.c
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "pitch_.h"
++#include "derivative.h"
++#include "integrate.h"
++
++#include "gx3.h"
++#include "motors.h"
++#include "attitudeController.h"
++
++derivative_t pitch_deriv;
++integrate_t  pitch_inte;
++
++
++void att_ctrl_pitch_init(float dt ,float K1, float K2, float lambda){
++	pitch_dt = dt;
++	pitch_K1 = K1;
++	pitch_K2 = K2;
++	pitch_lambda = lambda;
++
++	derivative_init(&pitch_deriv, dt);
++	integrate_init (&pitch_inte,  dt);
++
++}
++
++float att_ctrl_pitch_update(float cmd) {
++
++	const float pitch		 = drone_gx3.pitch;
++	const float dot_pitch	 = drone_gx3.dot_pitch;
++
++	derivative_update(&pitch_deriv, cmd);
++
++	//Dynamique de l'erreur
++	const float e1 = cmd - pitch;
++
++	integrate_update(&pitch_inte, e1);
++
++
++	//Erreur de la commande virtuel
++	const float e2 = dot_pitch - pitch_deriv.derivative - pitch_K1 * e1 - pitch_lambda * pitch_inte.integrale;
++
++	float U = e1;
++	U -= drone_control.A3 * drone_gx3.dot_roll * drone_gx3.dot_yaw;
++	U -= drone_control.A4 * drone_gx3.dot_roll * drone_motors.OMEGA_R;
++	U -= pitch_K1 * (e2 + pitch_K1 * e1 + pitch_lambda * pitch_inte.integrale);
++	U += pitch_lambda * e1;
++	U -= pitch_K2 * e2;
++
++
++	return U / drone_control.B2;
++
++}
+diff --git a/lib/attitudeController/pitch/pitch_.h b/lib/attitudeController/pitch/pitch_.h
+new file mode 100644
+index 0000000..1b8b1bf
+--- /dev/null
++++ b/lib/attitudeController/pitch/pitch_.h
+@@ -0,0 +1,30 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * pitch_.h
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef PITCH__H_
++#define PITCH__H_
++
++
++float pitch_dt = 0;
++float pitch_K1 = 0;
++float pitch_K2 = 0;
++float pitch_lambda = 0;
++
++
++#endif /* PITCH__H_ */
+diff --git a/lib/attitudeController/roll.h b/lib/attitudeController/roll.h
+new file mode 100644
+index 0000000..55ea981
+--- /dev/null
++++ b/lib/attitudeController/roll.h
+@@ -0,0 +1,30 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * roll.h
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef ROLL_H_
++#define ROLL_H_
++
++#include "motors.h"
++#include "gx3.h"
++
++void  att_ctrl_roll_init(float dt ,float K1, float K2, float lambda);
++float att_ctrl_roll_update(float cmd);
++
++
++#endif /* ROLL_H_ */
+diff --git a/lib/attitudeController/roll/roll.c b/lib/attitudeController/roll/roll.c
+new file mode 100644
+index 0000000..ae50a8e
+--- /dev/null
++++ b/lib/attitudeController/roll/roll.c
+@@ -0,0 +1,68 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * roll.c
++ *
++ *  Created on: Feb 7, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "roll_.h"
++#include "derivative.h"
++#include "integrate.h"
++
++#include "gx3.h"
++#include "motors.h"
++#include "attitudeController.h"
++
++derivative_t roll_deriv;
++integrate_t  roll_inte;
++
++
++void att_ctrl_roll_init(float dt ,float K1, float K2, float lambda){
++	roll_dt = dt;
++	roll_K1 = K1;
++	roll_K2 = K2;
++	roll_lambda = lambda;
++
++	derivative_init(&roll_deriv, dt);
++	integrate_init(&roll_inte, dt);
++}
++
++float att_ctrl_roll_update(float cmd) {
++
++	const float roll		 = drone_gx3.roll;
++	const float dot_roll	 = drone_gx3.dot_roll;
++
++	derivative_update(&roll_deriv, cmd);
++
++	//Dynamique de l'erreur
++	const float e1 = cmd - roll;
++
++	integrate_update(&roll_inte, e1);
++
++	//Erreur de la commande virtuel
++	const float e2 = dot_roll - roll_deriv.derivative - roll_K1 * e1 - roll_lambda * roll_inte.integrale;
++
++
++	float U = e1;
++	U -= drone_control.A1 * drone_gx3.dot_pitch * drone_gx3.dot_yaw;
++	U -= drone_control.A2 * drone_gx3.dot_pitch * drone_motors.OMEGA_R;
++	U -= roll_K1 * (e2 + roll_K1 * e1 + roll_lambda * roll_inte.integrale);
++	U += roll_lambda * e1;
++	U -= roll_K2 * e2;
++
++	//! @todo Transform this into a multiplication
++	return U / drone_control.B1;
++
++}
+diff --git a/lib/attitudeController/roll/roll_.h b/lib/attitudeController/roll/roll_.h
+new file mode 100644
+index 0000000..7f787b9
+--- /dev/null
++++ b/lib/attitudeController/roll/roll_.h
+@@ -0,0 +1,31 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * rol_.h
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef ROL__H_
++#define ROL__H_
++
++
++float roll_dt = 0;
++float roll_K1 = 0;
++float roll_K2 = 0;
++float roll_lambda = 0;
++
++
++
++#endif /* ROL__H_ */
+diff --git a/lib/attitudeController/yaw.h b/lib/attitudeController/yaw.h
+new file mode 100644
+index 0000000..cbdca79
+--- /dev/null
++++ b/lib/attitudeController/yaw.h
+@@ -0,0 +1,31 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * yaw.h
++ *
++ *  Created on: Feb 9, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef YAW_H_
++#define YAW_H_
++
++
++
++#define DT_FROM_PARAM	0.005// 5ms => 200 Hz
++
++void att_ctrl_yaw_init(float kp_gain, float ki_gain, float kd_gain, imu_t *imu);
++float att_ctrl_yaw_update(float cmd);
++
++
++#endif /* YAW_H_ */
+diff --git a/lib/attitudeController/yaw/yaw.c b/lib/attitudeController/yaw/yaw.c
+new file mode 100644
+index 0000000..92ed9b6
+--- /dev/null
++++ b/lib/attitudeController/yaw/yaw.c
+@@ -0,0 +1,45 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * yaw.c
++ *
++ *  Created on: Feb 7, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#include "gx3.h"
++
++#include "yaw_.h"
++#include "yaw.h"
++
++
++void att_ctrl_yaw_init(float kp_gain, float ki_gain, float kd_gain, imu_t* imu){
++	yaw_kp = kp_gain;
++	yaw_ki = ki_gain;
++	yaw_kd = kd_gain;
++
++	dot_yaw = imu->dot_yaw;
++
++	error_last = 0;
++}
++
++float att_ctrl_yaw_update(float cmd) {
++	float error_p = cmd - dot_yaw;
++	float error_i = (error_last + error_p) * DT_FROM_PARAM / 2;
++	float error_d = (error_last - error_p) * DT_FROM_PARAM;
++	float U = yaw_kp * error_p + yaw_ki * error_i + yaw_kd * error_d;
++	error_last = error_p;
++
++	return U;
++}
++
+diff --git a/lib/attitudeController/yaw/yaw_.h b/lib/attitudeController/yaw/yaw_.h
+new file mode 100644
+index 0000000..6d76771
+--- /dev/null
++++ b/lib/attitudeController/yaw/yaw_.h
+@@ -0,0 +1,33 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * yaw_.h
++ *
++ *  Created on: Feb 10, 2014
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef YAW__H_
++#define YAW__H_
++
++
++float yaw_kp;
++float yaw_ki;
++float yaw_kd;
++float dot_yaw;
++
++float error_last = 0;
++
++
++
++#endif /* YAW__H_ */

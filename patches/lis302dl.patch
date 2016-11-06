@@ -1,0 +1,347 @@
+diff --git a/periph/lis302dl.h b/periph/lis302dl.h
+new file mode 100644
+index 0000000..a430de1
+--- /dev/null
++++ b/periph/lis302dl.h
+@@ -0,0 +1,45 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++
++/*
++ * lis302dl.h
++ *
++ *  Created on: 2013-10-13
++ *      Author: liam
++ */
++
++#ifndef LIS302DL_H_
++#define LIS302DL_H_
++
++#include <stdint.h>
++
++void lis302dl_read_whoami();
++
++/**
++  * @brief  Writes bytes to the LIS302DL.
++  * @param  data : pointer to the buffer  containing the data to be written to the LIS302DL.
++  * @param  reg_addr : LIS302DL's internal address to write to.
++  * @param  lenght: Number of bytes to write.
++  */
++void lis302dl_write(uint8_t* data, uint8_t reg_addr, uint16_t length);
++
++/**
++  * @brief  Reads a block of data from the LIS302DL.
++  * @param  pBuffer : pointer to the buffer that receives the data read from the LIS302DL.
++  * @param  ReadAddr : LIS302DL's internal address to read from.
++  * @param  NumByteToRead : number of bytes to read from the LIS302DL.
++  * @retval None
++  */
++void lis302dl_read(uint8_t* data, uint8_t reg_addr, uint16_t length);
++
++#endif /* LIS302DL_H_ */
+diff --git a/periph/lis302dl/lis302dl.c b/periph/lis302dl/lis302dl.c
+new file mode 100644
+index 0000000..6efde7e
+--- /dev/null
++++ b/periph/lis302dl/lis302dl.c
+@@ -0,0 +1,171 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++
++/*
++ * lis302dl.c
++ *
++ *  Created on: 2013-10-13
++ *      Author: liam
++ */
++
++
++#include <stdint.h>
++
++#include "spi.h"
++#include "gpio.h"
++
++#include "lis302dl.h"
++#include "lis302dl_.h"
++#include "lis302dl_regs.h"
++
++#include "soft_timer_delay.h"
++
++#define NO_DEBUG_HEADER
++#include "debug.h"
++
++
++/*
++ *  SPI : 4 wire interface CS, SPC, SDI, SDO
++ *
++ *  bit 0 		: (RW) 0 -> write on device, 1 -> read
++ *  bit 1 		: (MS)
++ *  bit [2: 7] 	: (AD) register address
++ *  bit [8:15]	: (DO,DI) data
++ */
++
++static struct{
++	spi_t spi;
++	gpio_t cs_port;
++	gpio_pin_t cs_pin;
++
++}lis302dl;
++
++
++//set chip select
++inline void cs_set(){gpio_pin_set(lis302dl.cs_port, lis302dl.cs_pin);}
++//clear chip select
++inline void cs_clear(){gpio_pin_clear(lis302dl.cs_port, lis302dl.cs_pin);}
++
++void lis302dl_config(spi_t spi,
++		gpio_t port, gpio_pin_t pin)
++{
++	lis302dl.cs_port = port;
++	lis302dl.cs_pin = pin;
++	lis302dl.spi = spi;
++}
++
++void lis302dl_init(){
++
++	uint8_t rx_buf =0x00, ctrl;
++
++	//Setting CS pin
++	gpio_enable(lis302dl.cs_port);
++	gpio_set_output(lis302dl.cs_port, lis302dl.cs_pin);
++	cs_set();
++
++	ctrl = (uint8_t) (LIS302DL_CTRL1_PD | LIS302DL_CTRL1_XEN | LIS302DL_CTRL1_YEN | LIS302DL_CTRL1_ZEN);
++	/* Write value to MEMS CTRL_REG1 regsister */
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CTRL1, 1);
++
++	/* Configure Interrupt control register: enable Click interrupt1 */
++	ctrl = 0x07;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CTRL3, 1);
++
++	/* Enable Interrupt generation on click/double click on Z axis */
++	ctrl = 0x70;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_CFG, 1);
++
++	/* Configure Click Threshold on X/Y axis (10 x 0.5g) */
++	ctrl = 0xAA;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_THSY_X, 1);
++
++	/* Configure Click Threshold on Z axis (10 x 0.5g) */
++	ctrl = 0x0A;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_THSZ, 1);
++
++	/* Configure Time Limit */
++	ctrl = 0x03;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_TimLimit, 1);
++
++	/* Configure Latency */
++	ctrl = 0x7F;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_Latency, 1);
++
++	/* Configure Click Window */
++	ctrl = 0x7F;
++	lis302dl_write(&ctrl, LIS302DL_REGADDR_CLICK_Window, 1);
++
++
++	lis302dl_read(&rx_buf, LIS302DL_REGADDR_WHOAMI, 1);
++	if(rx_buf == 0x3B)
++		log_info("\t[LIS302DL] Initialized !!");
++	else
++		log_error("\t[LIS302DL] EROR unable to init !");
++}
++
++
++void lis302dl_write(uint8_t* data, uint8_t reg_addr, uint16_t length){
++	/* Configure the MS bit:
++       - When 0, the address will remain unchanged in multiple read/write commands.
++       - When 1, the address will be auto incremented in multiple read/write commands.
++	 */
++	if(length > 0x01)
++	{
++		reg_addr |= (uint8_t)LIS302DL_COM_MULTIP;
++	}
++	/* Set chip select Low at the start of the transmission */
++	cs_clear();
++
++	/* Send the Address of the indexed register */
++	spi_transfer_single(lis302dl.spi, reg_addr);
++
++	/* Send the data that will be written into the device (MSB First) */
++	while(length >= 0x01)
++	{
++		spi_transfer_single(lis302dl.spi, *data);
++		length--;
++		data++;
++	}
++
++	/* Set chip select High at the end of the transmission */
++	cs_set();
++}
++
++void lis302dl_read(uint8_t* data, uint8_t reg_addr, uint16_t length)
++{
++	if(length > 0x01)
++	{
++		reg_addr |= (uint8_t)(LIS302DL_COM_READ | LIS302DL_COM_MULTIP);
++	}
++	else
++	{
++		reg_addr |= (uint8_t)LIS302DL_COM_READ;
++	}
++	/* Set chip select Low at the start of the transmission */
++	cs_clear();
++
++	/* Send the Address of the indexed register */
++	spi_transfer_single(lis302dl.spi, reg_addr);
++
++	/* Receive the data that will be read from the device (MSB First) */
++	while(length > 0x00)
++	{
++		/* Send dummy byte (0x00) to generate the SPI clock to LIS302DL (Slave device) */
++		*data = spi_transfer_single(lis302dl.spi, LIS302DL_COM_DUMMY);
++		length--;
++		data++;
++	}
++
++	/* Set chip select High at the end of the transmission */
++	cs_set();
++}
+diff --git a/periph/lis302dl/lis302dl_.h b/periph/lis302dl/lis302dl_.h
+new file mode 100644
+index 0000000..cd4ae76
+--- /dev/null
++++ b/periph/lis302dl/lis302dl_.h
+@@ -0,0 +1,30 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * lis302dl_.h
++ *
++ *  Created on: 2013-10-13
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++//todo
++
++#ifndef LIS302DL__H_
++#define LIS302DL__H_
++
++//todo add param
++void lis302dl_init();
++void lis302dl_config(spi_t spi, gpio_t port, gpio_pin_t pin);
++
++
++#endif /* LIS302DL__H_ */
+diff --git a/periph/lis302dl/lis302dl_regs.h b/periph/lis302dl/lis302dl_regs.h
+new file mode 100644
+index 0000000..23381f6
+--- /dev/null
++++ b/periph/lis302dl/lis302dl_regs.h
+@@ -0,0 +1,77 @@
++/*
++ * This file is part of DronolabSTM32-embedded
++ *
++ * DronolabSTM32-embedded is a student project designed
++ * for flying drones.
++ *
++ * Go to < dronolab.etsmtl.ca > to find out more about
++ * the project
++ *
++ *
++ */
++
++/*
++ * lis302dl_regs.h
++ *
++ *  Created on: 2013-10-13
++ *      Author: liam <liambeguin.at.gmail.com>
++ */
++
++#ifndef LIS302DL_REGS_H_
++#define LIS302DL_REGS_H_
++
++enum{
++	LIS302DL_COM_DUMMY	= 0x00,
++	LIS302DL_COM_READ	= 0x80,
++	LIS302DL_COM_WRITE	= 0x00,
++	LIS302DL_COM_MULTIP	= 0x40,
++	LIS302DL_COM_S		= 0x00
++};
++
++enum{
++	/* 0x00 to 0x0E reserved reg */
++	LIS302DL_REGADDR_WHOAMI 		= 0x0F,
++	/* 0x10 to 0x1F reserved reg */
++	LIS302DL_REGADDR_CTRL1			= 0x20,
++	LIS302DL_REGADDR_CTRL2			= 0x21,
++	LIS302DL_REGADDR_CTRL3			= 0x22,
++	LIS302DL_REGADDR_HP_FILTER_RST 	= 0x23,
++	/* 0x24 to 0x26 reserved reg */
++	LIS302DL_REGADDR_STATUS_REG		= 0x27,
++	/* 0x28 not used */
++	LIS302DL_REGADDR_OUT_X			= 0x29,
++	/* 0x2A not used */
++	LIS302DL_REGADDR_OUT_Y			= 0x2B,
++	/* 0x2C not used */
++	LIS302DL_REGADDR_OUT_Z			= 0x2D,
++	/* 0x2E to 0x2F reserved reg */
++	LIS302DL_REGADDR_FF_WU_CFG_1	= 0x30,
++	LIS302DL_REGADDR_FF_WU_SRC_1	= 0x31,
++	LIS302DL_REGADDR_FF_WU_THS_1	= 0x32,
++	LIS302DL_REGADDR_FF_WU_DUR_1 	= 0x33,
++	LIS302DL_REGADDR_FF_WU_CFG_2	= 0x34,
++	LIS302DL_REGADDR_FF_WU_SRC_2	= 0x35,
++	LIS302DL_REGADDR_FF_WU_THS_2	= 0x36,
++	LIS302DL_REGADDR_FF_WU_DUR_2	= 0x37,
++	LIS302DL_REGADDR_CLICK_CFG		= 0x38,
++	LIS302DL_REGADDR_CLICK_SRC		= 0x39,
++	/* 0x3A not used */
++	LIS302DL_REGADDR_CLICK_THSY_X	= 0x3B,
++	LIS302DL_REGADDR_CLICK_THSZ		= 0x3C,
++	LIS302DL_REGADDR_CLICK_TimLimit = 0x3D,
++	LIS302DL_REGADDR_CLICK_Latency	= 0x3E,
++	LIS302DL_REGADDR_CLICK_Window	= 0x3F
++};
++
++enum{
++	LIS302DL_CTRL1_XEN	= 0x00,
++	LIS302DL_CTRL1_YEN	= 0x02,
++	LIS302DL_CTRL1_ZEN	= 0x04,
++	LIS302DL_CTRL1_STM 	= 0x08,
++	LIS302DL_CTRL1_STP	= 0x10,
++	LIS302DL_CTRL1_FS	= 0x20,
++	LIS302DL_CTRL1_PD	= 0x40,
++	LIS302DL_CTRL1_DR	= 0x80,
++};
++
++#endif /* LIS302DL_REGS_H_ */
