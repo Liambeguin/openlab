@@ -1,3 +1,10 @@
+
+# Warnings
+* This project is __no longer__ maintained
+* Changes to master have __not been tested__ and are highly likely to not work.
+ * CMake files need to be edited (see [dronolab branch](https://github.com/Liambeguin/openlab/tree/dronolab)) 
+ * The project was dropped before completion (and cleanup ...)
+ 
 # Home
 ![Dronolab](doc/dronolab_logo.png)
 
